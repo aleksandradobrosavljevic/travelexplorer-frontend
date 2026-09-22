@@ -1,0 +1,35 @@
+.admin-destination-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.admin-destination-content {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px 24px 12px;
+  box-sizing: border-box;
+
+  scrollbar-width: thin;
+  scrollbar-color: #239485 transparent;
+}
+
+.admin-destination-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.admin-destination-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-destination-content::-webkit-scrollbar-thumb {
+  background: #239485;
+  border-radius: 999px;
+}
+
+.admin-destination-content::-webkit-scrollbar-thumb:hover {
+  background: #1d7d71;
+}

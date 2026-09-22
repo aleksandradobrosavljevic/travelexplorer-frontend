@@ -1,0 +1,62 @@
+<div class="chatbot-wrapper" [class.chat-open]="isOpen()">
+
+  @if (!isOpen()) {
+    <button class="chat-toggle-btn" (click)="toggleChat()">
+      <i class="pi pi-comments"></i>
+    </button>
+  }
+
+  @if (isOpen()) {
+    <div class="chat-window">
+      <div class="chat-header">
+        <i class="pi pi-map-marker"></i>
+        <span class="chat-title">{{ 'chatbot.title' | translate }}</span>
+        <button class="chat-close-btn" (click)="toggleChat()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="chat-messages" #messagesContainer>
+
+        <div class="message model-message">
+          <div class="message-bubble">
+            {{ greeting() }}
+          </div>
+        </div>
+
+        @for (msg of messages(); track $index) {
+          <div class="message"
+            [class.user-message]="msg.role === 'user'"
+            [class.model-message]="msg.role === 'model'">
+            <div class="message-bubble">
+              {{ msg.content }}
+            </div>
+          </div>
+        }
+
+        @if (isLoading()) {
+          <div class="message model-message">
+            <div class="message-bubble loading">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="chat-input-area">
+        <textarea
+          [value]="userInput()"
+          (input)="userInput.set($any($event.target).value)"
+          (keydown)="onKeyDown($event)"
+          [placeholder]="'chatbot.placeholder' | translate"
+          rows="1"
+          [disabled]="isLoading()">
+        </textarea>
+        <button (click)="sendMessage()" [disabled]="!canSend()">
+          <i class="pi pi-send"></i>
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

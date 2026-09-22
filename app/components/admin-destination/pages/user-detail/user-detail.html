@@ -1,0 +1,141 @@
+<section class="page-shell">
+
+    <div class="page-header">
+      <div>
+        <button class="back-btn" (click)="goBack()">
+          <i class="pi pi-arrow-left"></i> Back to Publishers
+        </button>
+        <h1 *ngIf="publisher() as pub">
+          {{ pub.organizationName || pub.contactPerson || pub.email }}
+        </h1>
+      </div>
+  
+      <ng-container *ngIf="publisher() as pub">
+        <button
+          class="toggle-btn"
+          [ngClass]="pub.isActive ? 'deactivate' : 'activate'"
+          [disabled]="isToggling()"
+          (click)="toggleActive()">
+          <i class="pi" [ngClass]="pub.isActive ? 'pi-ban' : 'pi-check-circle'"></i>
+          {{ pub.isActive ? 'Deactivate' : 'Activate' }}
+        </button>
+      </ng-container>
+    </div>
+  
+    <div class="info-card" *ngIf="publisher() as pub">
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Status</span>
+          <span class="status-badge" [ngClass]="pub.isActive ? 'approved' : 'rejected'">
+            {{ pub.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ pub.email }}</span>
+          </div>
+        <div class="info-item">
+          <span class="info-label">Contact person</span>
+          <span class="info-value">{{ pub.contactPerson || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Phone</span>
+          <span class="info-value">{{ pub.phone || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Website</span>
+          <span class="info-value">
+            <a *ngIf="pub.website" [href]="pub.website" target="_blank">{{ pub.website }}</a>
+            <span *ngIf="!pub.website">—</span>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Publisher type</span>
+          <span class="info-value">{{ pub.publisherTypeName || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Joined</span>
+          <span class="info-value">{{ pub.joinedAt | date:'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+  
+    <div class="detail-loading" *ngIf="isLoading()">Loading...</div>
+    <div class="detail-error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+  
+    <section class="table-card" *ngIf="!isLoading() && content()">
+        <div class="filters-row">
+            <div class="filter-group search-group">
+              <label for="search">Search</label>
+              <input
+                id="search"
+                type="text"
+                [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+                placeholder="Search by name..."
+              />
+            </div>
+          
+            <div class="filter-group">
+              <label>Status</label>
+              <p-select
+                [options]="statusOptions"
+                [ngModel]="statusFilter()"
+                (ngModelChange)="statusFilter.set($event)"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="custom-prime-select"
+              />
+            </div>
+          
+            <div class="filter-group">
+              <label>Sort by</label>
+              <p-select
+                [options]="sortOptions"
+                [ngModel]="sortFilter()"
+                (ngModelChange)="sortFilter.set($event)"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="custom-prime-select"
+              />
+            </div>
+          </div>
+
+      <div class="card-header">
+        <div>
+          <h2>{{ contentType() }} content</h2>
+          <p class="card-subtitle">All content published by this publisher.</p>
+        </div>
+        <span class="count-pill">{{ items().length }} items</span>
+      </div>
+  
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredItems()"
+              class="clickable"
+              (click)="navigateToItem(item)">
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.objectTypeName || item.activityTypeName || item.eventTypeName || '—' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="statusClass(item.statusName)">
+                  {{ item.statusName }}
+                </span>
+              </td>
+              <td>{{ item.createdAt | date:'mediumDate' }}</td>
+            </tr>
+            <tr *ngIf="!items().length">
+              <td colspan="4" class="empty-row">No content found for this publisher.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>

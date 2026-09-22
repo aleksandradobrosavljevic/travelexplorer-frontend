@@ -1,0 +1,88 @@
+<div class="ad-map-page">
+  <div id="admin-destination-map"></div>
+
+  <!-- Controls: search prvo, pa destinacija, pa filter -->
+  <section class="map-controls">
+
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" class="search-icon" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.5" fill="none" stroke="#6b7280" stroke-width="2"/>
+        <path d="M16 16l4 4" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input
+        type="text"
+        [value]="searchQuery()"
+        (input)="onSearchChange($any($event.target).value)"
+        placeholder="Search content..."
+        class="search-input"
+      />
+      <button *ngIf="searchQuery()" type="button" class="clear-btn" (click)="clearFilters()" title="Clear filters">&#x2715;</button>
+    </div>
+
+    <div class="search-box" (click)="$event.stopPropagation()">
+      <svg viewBox="0 0 24 24" class="search-icon" aria-hidden="true">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+              fill="none" stroke="#6b7280" stroke-width="2"/>
+        <circle cx="12" cy="9" r="2" fill="#6b7280"/>
+      </svg>
+      <input
+        type="text"
+        [value]="addressQuery()"
+        (input)="onAddressSearchChange($any($event.target).value)"
+        (keydown)="onAddressKeyDown($event)"
+        placeholder="Search by address or area…"
+        class="search-input"
+      />
+      <button *ngIf="addressQuery()" type="button" class="clear-btn" (click)="clearAddressSearch()">&#x2715;</button>
+
+      <div class="address-results"
+           *ngIf="showAddressResults() && (addressResults().length || addressLoading())">
+        <div *ngIf="addressLoading()" class="address-results__loading">Searching…</div>
+        <button
+          *ngFor="let result of addressResults(); let i = index"
+          type="button"
+          class="address-results__item"
+          [class.focused]="addressFocusedIndex() === i"
+          (click)="selectAddress(result)"
+        >{{ result.label }}</button>
+      </div>
+    </div>
+
+    <div class="destination-chip" *ngIf="destination() as dest">
+      <span>{{ dest.destinationTypeName || 'City' }}, {{ dest.name }}, {{ dest.country }}</span>
+    </div>
+
+    <div class="filter-grid">
+      <div class="filter-field">
+        <span>Content type</span>
+        <div class="map-dropdown" [class.open]="isFilterOpen()" (click)="$event.stopPropagation()">
+          <button type="button" class="map-dropdown-trigger" (click)="toggleFilter()">
+            <span>{{ selectedCategoryLabel() }}</span>
+            <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+          <ul *ngIf="isFilterOpen()" class="map-dropdown-list" role="listbox">
+            <li
+              *ngFor="let opt of categoryOptions"
+              role="option"
+              class="map-dropdown-item"
+              [class.selected]="selectedCategory() === opt.value"
+              (click)="$event.stopPropagation(); selectCategory(opt.value)"
+            >
+              {{ opt.label }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="error-pill" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+
+  <div class="results-pill" *ngIf="!isLoading()">
+    {{ filteredItems().length }} / {{ allItems().length }} mapped
+  </div>
+
+</div>

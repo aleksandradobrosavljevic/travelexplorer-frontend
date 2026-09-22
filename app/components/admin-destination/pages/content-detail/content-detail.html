@@ -1,0 +1,397 @@
+<!-- ── View mode ─────────────────────────────────────────── -->
+<div class="detail-page" *ngIf="!isLoading() && item() as item">
+
+  <!-- Back dugme — gornji levi ugao, samo u view modu -->
+  <div *ngIf="!isEditing()" style="margin-bottom: 12px;">
+    <button type="button" class="action-btn-outline cancel" (click)="goBack()">
+      ← Back
+    </button>
+  </div>
+
+  <!-- ── EDIT MODE ── -->
+  <div class="detail-card" *ngIf="isEditing()">
+    <div class="edit-header">
+      <button type="button" class="action-btn-outline cancel" (click)="cancelEdit()">
+        ← Back
+      </button>
+      <h2>Edit {{ type() | titlecase }}</h2>
+    </div>
+    <div class="edit-body" (input)="formVersion.update(v => v + 1)" (change)="formVersion.update(v => v + 1)">
+
+      <!-- Image upload -->
+      <div class="edit-section">
+        <div class="edit-image-strip" *ngIf="editImagePreviews().length">
+          <div class="edit-image-thumb" *ngFor="let preview of editImagePreviews(); let i = index">
+            <img [src]="preview" alt="Preview" (click)="openLightbox(preview)" />
+            <button type="button" class="edit-image-remove" (click)="removeEditImage(i)" aria-label="Remove image">x</button>
+          </div>
+        </div>
+        <div class="edit-hero-placeholder" *ngIf="!editImagePreviews().length">
+          <svg viewBox="0 0 80 80" fill="none">
+            <rect x="10" y="22" width="60" height="42" rx="6" fill="#e2e8f0"/>
+            <circle cx="28" cy="36" r="6" fill="#cbd5e1"/>
+            <path d="M10 52l16-14 12 12 10-8 22 18H10z" fill="#cbd5e1"/>
+          </svg>
+        </div>
+        <label class="upload-btn" *ngIf="remainingEditImageSlots() > 0">
+          + Add images ({{ remainingEditImageSlots() }} remaining)
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple (change)="onImageChange($event)" hidden />
+        </label>
+        <p class="edit-image-hint">{{ imageUploadHint }}</p>
+        <p class="edit-image-error" *ngIf="editImageError()">{{ editImageError() }}</p>
+      </div>
+
+      <!-- Object form -->
+      <ng-container *ngIf="type() === 'object'">
+        <div class="edit-section">
+          <h3>Basic info</h3>
+          <div class="edit-grid">
+            <div class="edit-field">
+              <label>Name</label>
+              <input type="text" [(ngModel)]="objectForm.name" />
+            </div>
+            <div class="edit-field">
+              <label>Phone <span class="optional-tag">Optional</span></label>
+              <input
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                [ngModel]="objectForm.phone"
+                [placeholder]="phonePlaceholder"
+                (ngModelChange)="onObjectPhoneChange($event)" />
+              <small class="edit-field-hint">{{ phoneHelperText }}</small>
+            </div>
+            <div class="edit-field">
+              <label>Website <span class="optional-tag">Optional</span></label>
+              <input type="url" inputmode="url" [(ngModel)]="objectForm.website" [placeholder]="websitePlaceholder" />
+              <small class="edit-field-hint">{{ urlHelperText }}</small>
+            </div>
+            <div class="edit-field">
+              <label>Airbnb URL <span class="optional-tag">Optional</span></label>
+              <input type="url" inputmode="url" [(ngModel)]="objectForm.airbnbUrl" [placeholder]="airbnbUrlPlaceholder" />
+              <small class="edit-field-hint">{{ urlHelperText }}</small>
+            </div>
+            <div class="edit-field">
+              <label>Booking URL <span class="optional-tag">Optional</span></label>
+              <input type="url" inputmode="url" [(ngModel)]="objectForm.bookingUrl" [placeholder]="bookingUrlPlaceholder" />
+              <small class="edit-field-hint">{{ urlHelperText }}</small>
+            </div>
+            <div class="edit-field edit-field--wide">
+              <label>
+                Description
+                <span class="optional-tag">Optional</span>
+                <span style="float:right;font-size:11px;font-weight:500;"
+                  [style.color]="objectForm.description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                  {{ objectForm.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+                </span>
+              </label>
+              <textarea
+                [ngModel]="objectForm.description"
+                (ngModelChange)="onObjectDescriptionChange($event)"
+                [maxlength]="DESCRIPTION_MAX_LENGTH"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <h3>Location</h3>
+          <div class="edit-field">
+            <label>Address <span class="optional-tag">Optional</span></label>
+            <input type="text" [value]="editAddress() ?? ''" (input)="editAddress.set($any($event.target).value)" />
+          </div>
+          <div id="detail-edit-map" class="edit-map"></div>
+          <p class="edit-map-hint" *ngIf="!locationSet()">Click on the map to set location</p>
+        </div>
+      </ng-container>
+
+      <!-- Activity form -->
+      <ng-container *ngIf="type() === 'activity'">
+        <div class="edit-section">
+          <h3>Basic info</h3>
+          <div class="edit-grid">
+            <div class="edit-field">
+              <label>Name</label>
+              <input type="text" [(ngModel)]="activityForm.name" />
+            </div>
+            <div class="edit-field">
+              <label>Duration (min) <span class="optional-tag">Optional</span></label>
+              <input type="number" min="0" [(ngModel)]="activityForm.durationMinutes" placeholder="60" />
+            </div>
+            <div class="edit-field">
+              <label>Price <span class="optional-tag">Optional</span></label>
+              <input type="number" min="0" [(ngModel)]="activityForm.price" placeholder="15.00" />
+            </div>
+            <div class="edit-field">
+              <label>Currency <span class="optional-tag">Optional</span></label>
+              <input type="text" [(ngModel)]="activityForm.currency" />
+            </div>
+            <div class="edit-field edit-field--wide">
+              <label>
+                Description
+                <span class="optional-tag">Optional</span>
+                <span style="float:right;font-size:11px;font-weight:500;"
+                  [style.color]="activityForm.description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                  {{ activityForm.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+                </span>
+              </label>
+              <textarea
+                [ngModel]="activityForm.description"
+                (ngModelChange)="onActivityDescriptionChange($event)"
+                [maxlength]="DESCRIPTION_MAX_LENGTH"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="edit-section">
+          <h3>Location</h3>
+          <div id="detail-edit-map" class="edit-map"></div>
+          <p class="edit-map-hint" *ngIf="!locationSet()">Click on the map to set location</p>
+        </div>
+      </ng-container>
+
+      <!-- Event form -->
+      <ng-container *ngIf="type() === 'event'">
+        <div class="edit-section">
+          <h3>Basic info</h3>
+          <div class="edit-grid">
+            <div class="edit-field">
+              <label>Name</label>
+              <input type="text" [(ngModel)]="eventForm.name" />
+            </div>
+            <div class="edit-field">
+              <label>Capacity <span class="optional-tag">Optional</span></label>
+              <input type="number" min="0" [(ngModel)]="eventForm.capacity" placeholder="100" />
+            </div>
+            <div class="edit-field">
+              <label>Price <span class="optional-tag">Optional</span></label>
+              <input type="number" min="0" [(ngModel)]="eventForm.price" placeholder="15.00" />
+            </div>
+            <div class="edit-field">
+              <label>Currency <span class="optional-tag">Optional</span></label>
+              <input type="text" [(ngModel)]="eventForm.currency" />
+            </div>
+            <div class="edit-field">
+              <label>Start</label>
+              <p-datepicker [(ngModel)]="eventForm.startDatetime" [showTime]="true" [hourFormat]="'24'"
+                [minDate]="minDateTime" [showIcon]="true" dateFormat="dd.mm.yy" placeholder="Select date and time" />
+            </div>
+            <div class="edit-field">
+              <label>End <span class="optional-tag">Optional</span></label>
+              <p-datepicker [(ngModel)]="eventForm.endDatetime" [showTime]="true" [hourFormat]="'24'"
+                [minDate]="eventForm.startDatetime ?? minDateTime" [showIcon]="true" dateFormat="dd.mm.yy" placeholder="Select date and time" />
+            </div>
+            <div class="edit-field edit-field--wide">
+              <label>
+                Description
+                <span class="optional-tag">Optional</span>
+                <span style="float:right;font-size:11px;font-weight:500;"
+                  [style.color]="eventForm.description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                  {{ eventForm.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+                </span>
+              </label>
+              <textarea
+                [ngModel]="eventForm.description"
+                (ngModelChange)="onEventDescriptionChange($event)"
+                [maxlength]="DESCRIPTION_MAX_LENGTH"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <div class="edit-footer">
+      <button type="button" class="action-btn-save" (click)="saveEdit()" [disabled]="isSaving() || !isFormDirty()">
+        {{ isSaving() ? 'Saving...' : 'Save changes' }}
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── VIEW MODE ── -->
+  <div class="detail-card" *ngIf="!isEditing()">
+
+    <!-- Hero -->
+    <div class="detail-hero">
+      <img *ngIf="activeImage(item)" [src]="activeImage(item)!" [alt]="$any(item).name" class="detail-hero-img" (click)="openLightbox(activeImage(item))" />
+      <button type="button" class="gallery-nav gallery-nav-prev" *ngIf="itemImages(item).length > 1" (click)="previousImage()" aria-label="Previous image">‹</button>
+      <button type="button" class="gallery-nav gallery-nav-next" *ngIf="itemImages(item).length > 1" (click)="nextImage()" aria-label="Next image">›</button>
+      <div *ngIf="!activeImage(item)" class="detail-hero-placeholder">
+        <svg viewBox="0 0 80 80" fill="none">
+          <rect x="10" y="22" width="60" height="42" rx="6" fill="#e2e8f0"/>
+          <circle cx="28" cy="36" r="6" fill="#cbd5e1"/>
+          <path d="M10 52l16-14 12 12 10-8 22 18H10z" fill="#cbd5e1"/>
+        </svg>
+        <span>No image available</span>
+      </div>
+    </div>
+    <div class="detail-gallery-strip" *ngIf="itemImages(item).length > 1">
+      <button
+        type="button"
+        class="detail-gallery-thumb"
+        *ngFor="let image of itemImages(item); let i = index"
+        [class.active]="i === activeImageIndex()"
+        (click)="selectImage(i)">
+        <img [src]="image" alt="Gallery thumbnail" />
+      </button>
+    </div>
+
+    <div class="detail-content">
+
+      <!-- Header -->
+      <div class="detail-header">
+        <div class="detail-header-left">
+          <div class="detail-type-row">
+            <span class="detail-type-badge" [ngClass]="type()">{{ type() | titlecase }}</span>
+            <ng-container *ngIf="asEvent() as evt">
+              <span class="detail-price-pill" *ngIf="evt.price; else freePill">{{ evt.price | number }} {{ evt.currency }}</span>
+              <ng-template #freePill><span class="detail-price-pill free">Free</span></ng-template>
+            </ng-container>
+            <ng-container *ngIf="asActivity() as act">
+              <span class="detail-price-pill" *ngIf="act.price">{{ act.price | number }} {{ act.currency }}</span>
+            </ng-container>
+          </div>
+
+          <h1 class="detail-name">{{ $any(item).name }}</h1>
+
+          <div class="detail-quick-meta">
+            <span class="detail-rating" *ngIf="averageRating() > 0">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="#eab308"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              {{ averageRating() | number:'1.1-1' }}
+              <span class="detail-review-count">({{ reviewCount() }})</span>
+            </span>
+            <ng-container *ngIf="asObject() as obj">
+              <span class="detail-address" *ngIf="obj.address">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" width="12" height="12" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+                {{ obj.address }}
+              </span>
+            </ng-container>
+          </div>
+
+          <div class="detail-status-row">
+            <span class="status-badge" [ngClass]="statusClass()">{{ $any(item).statusName }}</span>
+            <span class="detail-rejection-inline" *ngIf="$any(item).rejectionReason">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+              {{ $any(item).rejectionReason }}
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-header-actions">
+          <button type="button" class="show-map-fab"
+            [disabled]="!hasMappableLocation()"
+            (click)="showOnMap()" title="Show on map">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"/>
+              <path d="M9 3v15M15 6v15"/>
+            </svg>
+            Show on map
+          </button>
+          <button type="button" class="edit-fab" (click)="startEdit()" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" stroke-linecap="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-divider"></div>
+
+      <!-- About -->
+      <section class="detail-section" *ngIf="$any(item).description">
+        <h2>About</h2>
+        <p class="detail-description">{{ $any(item).description }}</p>
+      </section>
+
+      <div class="detail-divider"></div>
+
+      <!-- Details -->
+      <section class="detail-section">
+        <h2>Details</h2>
+        <dl class="detail-fields">
+          <ng-container *ngIf="asObject() as obj">
+            <div><dt>Type</dt><dd>{{ obj.objectTypeName }}</dd></div>
+            <div *ngIf="obj.address"><dt>Address</dt><dd>{{ obj.address }}</dd></div>
+            <div *ngIf="obj.website"><dt>Website</dt><dd><a [href]="obj.website" target="_blank">{{ obj.website }}</a></dd></div>
+            <div *ngIf="obj.phone"><dt>Phone</dt><dd>{{ obj.phone }}</dd></div>
+            <div *ngIf="obj.airbnbUrl"><dt>Airbnb</dt><dd><a [href]="obj.airbnbUrl" target="_blank">View listing</a></dd></div>
+            <div *ngIf="obj.bookingUrl"><dt>Booking</dt><dd><a [href]="obj.bookingUrl" target="_blank">View listing</a></dd></div>
+            <div><dt>Created</dt><dd>{{ obj.createdAt | date:'mediumDate' }}</dd></div>
+          </ng-container>
+          <ng-container *ngIf="asActivity() as act">
+            <div><dt>Type</dt><dd>{{ act.activityTypeName }}</dd></div>
+            <div *ngIf="act.destinationName"><dt>Destination</dt><dd>{{ act.destinationName }}</dd></div>
+            <div *ngIf="act.durationMinutes"><dt>Duration</dt><dd>{{ act.durationMinutes }} min</dd></div>
+            <div *ngIf="act.price != null"><dt>Price</dt><dd>{{ act.price }} {{ act.currency }}</dd></div>
+            <div><dt>Created</dt><dd>{{ act.createdAt | date:'mediumDate' }}</dd></div>
+          </ng-container>
+          <ng-container *ngIf="asEvent() as evt">
+            <div><dt>Type</dt><dd>{{ evt.eventTypeName }}</dd></div>
+            <div><dt>Start</dt><dd>{{ evt.startDatetime | date:'MMM d, y, h:mm a' }}</dd></div>
+            <div *ngIf="evt.endDatetime"><dt>End</dt><dd>{{ evt.endDatetime | date:'MMM d, y, h:mm a' }}</dd></div>
+            <div *ngIf="evt.capacity"><dt>Capacity</dt><dd>{{ evt.capacity }}</dd></div>
+            <div *ngIf="evt.price != null"><dt>Price</dt><dd>{{ evt.price === 0 ? 'Free' : (evt.price | number) + ' ' + evt.currency }}</dd></div>
+            <div><dt>Created</dt><dd>{{ evt.createdAt | date:'mediumDate' }}</dd></div>
+          </ng-container>
+        </dl>
+      </section>
+
+      <div class="detail-divider"></div>
+
+      <!-- Reviews -->
+      <section class="detail-section" *ngIf="reviews().length > 0">
+        <div class="reviews-header">
+          <h2>Reviews</h2>
+          <div class="reviews-meta">
+            <span class="review-rating-avg">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="#eab308"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              {{ averageRating() | number:'1.1-1' }}
+            </span>
+            <span class="review-count-label">{{ reviewCount() }} review{{ reviewCount() !== 1 ? 's' : '' }}</span>
+            <button
+              type="button"
+              class="reviews-link"
+              *ngIf="reviewCount() > 4"
+              (click)="toggleAllReviews()">
+              {{ showAllReviews() ? 'Show top reviews' : 'See all reviews' }}
+            </button>
+          </div>
+        </div>
+        <div class="review-list">
+          <div class="review-card" *ngFor="let review of reviews()">
+            <div class="review-avatar">{{ (review.touristFirstName?.charAt(0) ?? '') + (review.touristLastName?.charAt(0) ?? '') }}</div>
+            <div class="review-body">
+              <div class="review-top-row">
+                <div>
+                  <strong>{{ review.touristFirstName }} {{ review.touristLastName }}</strong>
+                  <span class="review-date">{{ review.createdAt | date:'mediumDate' }}</span>
+                </div>
+                <div class="review-stars">
+                  <span *ngFor="let star of [1,2,3,4,5]" [class.filled]="star <= review.rating">★</span>
+                </div>
+              </div>
+              <p class="review-text" *ngIf="review.comment">{{ review.comment }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section" *ngIf="reviews().length === 0 && !isLoading()">
+        <h2>Reviews</h2>
+        <p class="no-reviews-text">No reviews yet.</p>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="detail-loading" *ngIf="isLoading()">Loading...</div>
+<div class="detail-error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+
+<div class="detail-lightbox" *ngIf="lightboxImage()" (click)="closeLightbox()">
+  <button type="button" class="detail-lightbox-close" (click)="closeLightbox()" aria-label="Close image">&times;</button>
+  <img [src]="lightboxImage()!" alt="Expanded image" (click)="$event.stopPropagation()" />
+</div>

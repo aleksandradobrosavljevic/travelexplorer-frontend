@@ -1,0 +1,257 @@
+<div class="profile-overlay" (click)="closePanel()"></div>
+
+<aside class="profile-panel" (click)="$event.stopPropagation()">
+
+  <button class="close-btn" type="button" (click)="closePanel()" aria-label="Close">
+    &times;
+  </button>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading profile...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+
+    <!-- ── HEADER ── -->
+    <div class="profile-header">
+      <div class="avatar-wrapper">
+        <div class="avatar" (click)="triggerFileInput()">
+          <img *ngIf="avatarUrl()" [src]="avatarUrl()" alt="Profile photo" class="avatar-img" />
+          <span *ngIf="!avatarUrl()">{{ initials() }}</span>
+          <div class="avatar-camera-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2a9d8f" stroke-width="2.2">
+              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+        </div>
+        <input #fileInput type="file" accept="image/*" class="file-input-hidden" (change)="onFileSelected($event)" />
+        <button
+          *ngIf="avatarUrl()"
+          type="button"
+          class="avatar-remove-btn"
+          [disabled]="isUploadingPhoto()"
+          (click)="removeAvatar()">
+          Remove
+        </button>
+      </div>
+
+      <div class="profile-main-info">
+        <h2>{{ profile().organizationName || 'Organization' }}</h2>
+        <p *ngIf="!isEditMode()">{{ profile().contactPerson || '' }}</p>
+        <p *ngIf="isEditMode()" class="editing-label">Editing profile...</p>
+      </div>
+
+      <button *ngIf="!isEditMode()" class="edit-profile-btn" type="button" (click)="startEdit()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Edit Profile
+      </button>
+      <button *ngIf="isEditMode()" class="edit-profile-btn cancel-mode" type="button" (click)="cancelEdit()">
+        Cancel
+      </button>
+    </div>
+
+    <!-- ══════════ VIEW MODE ══════════ -->
+    <ng-container *ngIf="!isEditMode()">
+
+      <section class="profile-section">
+        <h3>Organization info</h3>
+        <div class="info-grid">
+          <div class="info-field">
+            <label>Organization name</label>
+            <span>{{ profile().organizationName || '—' }}</span>
+          </div>
+          <div class="info-field">
+            <label>Contact person</label>
+            <span>{{ profile().contactPerson || '—' }}</span>
+          </div>
+          <div class="info-field">
+            <label>Phone</label>
+            <span>{{ profile().phone || '—' }}</span>
+          </div>
+          <div class="info-field">
+            <label>Website</label>
+            <a *ngIf="profile().website" [href]="profile().website" target="_blank" class="website-link">{{ profile().website }}</a>
+            <span *ngIf="!profile().website">—</span>
+          </div>
+          <div class="info-field full">
+            <label>Description</label>
+            <span *ngIf="profile().description">{{ profile().description }}</span>
+            <span *ngIf="!profile().description" class="not-set">No description provided.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <h3>Language</h3>
+        <div class="info-field">
+          <label>Preferred language</label>
+          <span>{{ profile().language }}</span>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <h3>Publisher stats</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <label>Total content</label>
+            <div class="stat-value">{{ stats().totalContent }}</div>
+            <span>items published</span>
+          </div>
+          <div class="stat-card">
+            <label>Approved</label>
+            <div class="stat-value approved">{{ stats().approvedContent }}</div>
+            <span>out of {{ stats().totalContent }}</span>
+          </div>
+          <div class="stat-card">
+            <label>Avg. rating</label>
+            <div class="stat-value rating">{{ stats().avgRating > 0 ? stats().avgRating.toFixed(1) + ' ★' : '—' }}</div>
+            <span>across all content</span>
+          </div>
+          <div class="stat-card">
+            <label>Most reviewed</label>
+            <div class="stat-value most">{{ stats().mostReviewed }}</div>
+            <span>top content</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-section security-section">
+        <h3>Security and privacy</h3>
+        <div class="security-card"
+          (click)="startEditAndScrollToPassword()"
+          role="button" tabindex="0"
+          (keydown.enter)="startEditAndScrollToPassword()">
+          <div class="security-card-text">
+            <strong>Password</strong>
+            <p>Update your password when needed.</p>
+          </div>
+          <span class="password-mask">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+        </div>
+        <div class="privacy-card">
+          <strong>Privacy settings</strong>
+          <span>Standard privacy</span>
+        </div>
+      </section>
+
+    </ng-container>
+
+    <!-- ══════════ EDIT MODE ══════════ -->
+    <ng-container *ngIf="isEditMode()">
+
+      <section class="profile-section">
+        <h3>Edit organization info</h3>
+        <div class="info-grid">
+          <div class="info-field">
+            <label>Organization name</label>
+            <input type="text" class="profile-input"
+              [value]="editForm().organizationName"
+              (input)="updateField('organizationName', $any($event.target).value)" />
+          </div>
+          <div class="info-field">
+            <label>Contact person</label>
+            <input type="text" class="profile-input"
+              [value]="editForm().contactPerson"
+              (input)="updateField('contactPerson', $any($event.target).value)" />
+          </div>
+          <div class="info-field">
+            <label>Phone</label>
+            <input type="tel" inputmode="tel" autocomplete="tel" class="profile-input"
+              [value]="editForm().phone"
+              [placeholder]="phonePlaceholder"
+              (input)="updateField('phone', $any($event.target).value)" />
+            <small class="field-hint">{{ phoneHelperText }}</small>
+          </div>
+          <div class="info-field">
+            <label>Website <span class="optional-tag">Optional</span></label>
+            <input type="url" inputmode="url" class="profile-input"
+              [value]="editForm().website"
+              [placeholder]="websitePlaceholder"
+              (input)="updateField('website', $any($event.target).value)" />
+          </div>
+          <div class="info-field full">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;">
+              <label>Description <span class="optional-tag">Optional</span></label>
+              <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+                [style.color]="editForm().description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                {{ editForm().description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+              </span>
+            </div>
+            <textarea class="profile-input" rows="3"
+              [value]="editForm().description"
+              maxlength="1000"
+              (input)="updateField('description', $any($event.target).value)"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Language - PrimeNG select -->
+      <section class="profile-section">
+        <h3>Language</h3>
+        <div class="info-field">
+          <label>Preferred language</label>
+          <p-select
+            [options]="languageOptions"
+            [ngModel]="editForm().language"
+            (ngModelChange)="updateField('language', $event)"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select language"
+            styleClass="profile-select">
+          </p-select>
+        </div>
+      </section>
+
+      <!-- Security & password -->
+      <section class="profile-section security-section" #passwordSection>
+        <h3>Security and privacy</h3>
+
+        <div class="security-card no-hover">
+          <div class="security-card-text">
+            <strong>Password</strong>
+            <p>Update your password when needed.</p>
+          </div>
+        </div>
+
+        <div class="password-edit">
+          <input type="password" class="profile-input"
+            placeholder="Current password"
+            [value]="passwordData().oldPassword"
+            (input)="updatePasswordField('oldPassword', $any($event.target).value)" />
+          <input type="password" class="profile-input"
+            placeholder="New password"
+            [value]="passwordData().newPassword"
+            (input)="updatePasswordField('newPassword', $any($event.target).value)" />
+          <input type="password" class="profile-input"
+            placeholder="Confirm new password"
+            [value]="passwordData().confirmPassword"
+            (input)="updatePasswordField('confirmPassword', $any($event.target).value)" />
+          <p class="password-note">Use at least 8 characters.</p>
+        </div>
+
+        <div class="privacy-card">
+          <strong>Privacy settings</strong>
+          <span>Standard privacy</span>
+        </div>
+      </section>
+
+    </ng-container>
+
+    <!-- Actions -->
+    <div class="profile-actions">
+      <button *ngIf="isEditMode()" class="action-btn save-btn" type="button"
+        [disabled]="isSaving() || !hasChanges()" (click)="saveChanges()">
+        {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+      </button>
+      <button class="action-btn signout-btn" type="button" (click)="signOut()">
+        Sign out
+      </button>
+    </div>
+
+  </ng-container>
+</aside>

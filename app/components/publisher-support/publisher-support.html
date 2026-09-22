@@ -1,0 +1,163 @@
+<app-publisher-header></app-publisher-header>
+
+<section class="support-page">
+  <header class="support-header">
+    <div class="header-copy">
+      <span class="eyebrow">{{ copy().eyebrow }}</span>
+      <h1>{{ copy().title }}</h1>
+      <p>{{ copy().subtitle }}</p>
+    </div>
+
+    <aside class="response-panel" aria-label="Support response information">
+      <i class="pi pi-clock"></i>
+      <span>{{ copy().responseTime }}</span>
+      <strong>{{ copy().responseWindow }}</strong>
+    </aside>
+  </header>
+
+  <section class="support-toolbar">
+    <div class="search-panel">
+      <label for="publisherSupportSearch">{{ copy().searchLabel }}</label>
+      <div class="search-input-shell">
+        <i class="pi pi-search"></i>
+        <input
+          id="publisherSupportSearch"
+          type="text"
+          [placeholder]="copy().searchPlaceholder"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchTermChange($event)"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="topic-section">
+    <div class="section-title-row">
+      <h2>{{ copy().topicsTitle }}</h2>
+      <span>{{ filteredArticles().length }} {{ copy().articlesCount }}</span>
+    </div>
+
+    <div class="topic-grid">
+      <button
+        *ngFor="let category of categories()"
+        type="button"
+        class="topic-card"
+        [class.active]="selectedCategory() === category.id"
+        (click)="setCategory(category.id)">
+        <span class="topic-icon"><i [class]="category.icon"></i></span>
+        <span class="topic-text">
+          <strong>{{ category.label }}</strong>
+          <small>{{ category.summary }}</small>
+        </span>
+        <span class="topic-count">{{ categoryCount(category.id) }}</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="support-content-grid">
+    <aside class="check-panel">
+      <h2>{{ copy().firstChecksTitle }}</h2>
+      <ul>
+        <li *ngFor="let item of copy().firstChecks">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ item }}</span>
+        </li>
+      </ul>
+    </aside>
+
+    <section class="answers-panel">
+      <div class="answers-head">
+        <div>
+          <span class="eyebrow">{{ selectedCategory() === 'all' ? copy().allArticles : categories().find(category => category.id === selectedCategory())?.label }}</span>
+          <h2>{{ copy().answersTitle }}</h2>
+        </div>
+      </div>
+
+      <article class="support-answer" *ngFor="let item of filteredArticles()" [class.expanded]="expandedId() === item.id">
+        <button
+          type="button"
+          class="answer-toggle"
+          (click)="toggle(item.id)"
+          [attr.aria-expanded]="expandedId() === item.id">
+          <span class="answer-icon"><i [class]="item.icon"></i></span>
+          <span class="answer-title">
+            <small>{{ item.badge }}</small>
+            <strong>{{ item.title }}</strong>
+            <em>{{ item.summary }}</em>
+          </span>
+          <i class="pi pi-chevron-down chevron" [class.open]="expandedId() === item.id"></i>
+        </button>
+
+        <div class="answer-body" [@expandCollapse]="expandedId() === item.id ? 'expanded' : 'collapsed'">
+          <p *ngFor="let paragraph of item.answer">{{ paragraph }}</p>
+
+          <div class="answer-checklist">
+            <div *ngFor="let check of item.checklist">
+              <i class="pi pi-check"></i>
+              <span>{{ check }}</span>
+            </div>
+          </div>
+
+          <a *ngIf="item.actionRoute && item.actionLabel" [routerLink]="item.actionRoute" class="answer-link">
+            {{ item.actionLabel }}
+            <i class="pi pi-arrow-right"></i>
+          </a>
+        </div>
+      </article>
+
+      <div class="empty-state" *ngIf="filteredArticles().length === 0">
+        <i class="pi pi-search"></i>
+        <strong>{{ copy().noResultsTitle }}</strong>
+        <p>{{ copy().noResultsText }}</p>
+      </div>
+    </section>
+  </section>
+
+  <section class="contact-panel">
+    <div class="contact-copy">
+      <span class="eyebrow">{{ copy().contactEyebrow }}</span>
+      <h2>{{ copy().contactTitle }}</h2>
+      <p>{{ copy().contactText }}</p>
+    </div>
+
+    <form class="support-form" (ngSubmit)="submitSupportRequest()">
+      <label>
+        <span>{{ copy().organizationName }}</span>
+        <input type="text" [ngModel]="supportForm().name" name="supportName" readonly />
+      </label>
+
+      <label>
+        <span>{{ copy().email }}</span>
+        <input type="email" [ngModel]="supportForm().email" name="supportEmail" readonly />
+      </label>
+
+      <label class="message-field">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;">
+          <span>{{ copy().message }}</span>
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+            [style.color]="supportForm().message.length > MESSAGE_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+            {{ supportForm().message.length }} / {{ MESSAGE_MAX_LENGTH }}
+          </span>
+        </div>
+        <textarea
+          rows="5"
+          [ngModel]="supportForm().message"
+          name="supportMessage"
+          (ngModelChange)="updateSupportField('message', $event)"
+          maxlength="2000"
+          [placeholder]="copy().messagePlaceholder">
+        </textarea>
+      </label>
+
+      <div class="support-form-actions">
+        <p class="support-status" [class.success]="supportStatusTone() === 'success'" [class.error]="supportStatusTone() === 'error'" *ngIf="supportStatus()">
+          {{ supportStatus() }}
+        </p>
+        <button type="submit" [disabled]="!canSubmitSupport()">
+          <i class="pi pi-send"></i>
+          {{ isSupportSending() ? copy().sending : copy().send }}
+        </button>
+      </div>
+    </form>
+  </section>
+</section>

@@ -1,0 +1,78 @@
+<header class="header">
+  <div class="header-top">
+
+    <div class="logo-section">
+      <div class="logo-circle">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" />
+          <path d="M15.5 8.5L13.2 13.2L8.5 15.5L10.8 10.8L15.5 8.5Z" fill="white" />
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h2>{{ 'app.name' | translate }}</h2>
+        <p *ngIf="organizationName(); else fallback">{{ organizationName() }}</p>
+        <ng-template #fallback><p>{{ 'publisher.portal' | translate }}</p></ng-template>
+      </div>
+    </div>
+
+    <nav class="menu-nav">
+      <a class="menu-link"
+         routerLink="/publisher-my-content"
+         routerLinkActive="active-link"
+         [routerLinkActiveOptions]="{ exact: true }">
+        {{ 'publisher.navigation.myContent' | translate }}
+      </a>
+      <a class="menu-link"
+         routerLink="/publisher-map"
+         routerLinkActive="active-link">
+        {{ 'navigation.map' | translate }}
+      </a>
+      <a class="menu-link"
+         routerLink="/publisher-reviews"
+         routerLinkActive="active-link"
+         [routerLinkActiveOptions]="{ exact: true }">
+        {{ 'reviews.title' | translate }}
+      </a>
+      <a class="menu-link"
+         routerLink="/publisher-support"
+         routerLinkActive="active-link"
+         [routerLinkActiveOptions]="{ exact: true }">
+        {{ 'navigation.support' | translate }}
+      </a>
+    </nav>
+
+    <div class="profile-section">
+      <div class="language-switch" aria-label="Language">
+        <button
+          type="button"
+          [class.active]="currentLanguage === 'en'"
+          (click)="setLanguage('en')">
+          EN
+        </button>
+        <button
+          type="button"
+          [class.active]="currentLanguage === 'sr'"
+          (click)="setLanguage('sr')">
+          SR
+        </button>
+      </div>
+      <button class="profile-btn" type="button" (click)="openProfile()" title="Profile">
+        <img *ngIf="avatarUrl(); else publisherProfileIcon" [src]="avatarUrl()!" alt="Profile photo" class="profile-avatar" />
+        <ng-template #publisherProfileIcon>
+          <svg class="profile-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="8" r="4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </ng-template>
+      </button>
+    </div>
+
+  </div>
+</header>
+
+<!-- Publisher Profile Panel -->
+<app-publisher-profile-panel
+  *ngIf="isProfileOpen()"
+  (avatarChanged)="onAvatarChanged($event)"
+  (close)="closeProfile()">
+</app-publisher-profile-panel>

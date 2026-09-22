@@ -1,0 +1,223 @@
+.section-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f1faee 0%, #ffffff 100%);
+  padding: 32px;
+}
+
+.top-bar {
+  margin-bottom: 30px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(29, 53, 87, 0.08);
+  text-decoration: none;
+  color: #1d3557;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.back-link:hover {
+  color: #2a9d8f;
+}
+
+.page-hero {
+  background: linear-gradient(135deg, #1d3557, #2a9d8f);
+  color: white;
+  border-radius: 28px;
+  padding: 40px;
+  margin-bottom: 40px;
+}
+
+.page-hero h1 {
+  margin: 0 0 12px;
+  font-size: 40px;
+  font-weight: 800;
+}
+
+.page-hero p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.section-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 260px) minmax(180px, 240px);
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 28px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(29, 53, 87, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 22px rgba(29, 53, 87, 0.06);
+}
+
+.section-filter-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.section-filter-field span {
+  color: #1d3557;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.section-filter-field input,
+.section-filter-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d6dee8;
+  border-radius: 12px;
+  padding: 0 13px;
+  background: #ffffff;
+  color: #1d3557;
+  font: inherit;
+  outline: none;
+}
+
+.section-filter-field input:focus,
+.section-filter-field select:focus {
+  border-color: #2a9d8f;
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.14);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  padding: 4px 2px 14px;
+}
+
+.card-grid app-preview-card {
+  min-width: 0;
+}
+
+.empty-state {
+  margin-top: 40px;
+  padding: 48px 24px;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.empty-state h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  color: #1d3557;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #5f6b7a;
+  font-size: 16px;
+}
+
+.loading-state {
+  color: #1d3557;
+}
+
+@media (max-width: 1100px) {
+  .section-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .section-page {
+    padding: 20px;
+  }
+
+  .page-hero {
+    padding: 28px 22px;
+  }
+
+  .page-hero h1 {
+    font-size: 30px;
+  }
+
+  .section-filters {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .card-grid {
+    gap: 12px;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .card {
+    border-radius: 16px;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .card-image {
+    height: clamp(112px, 30vw, 150px);
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .card-content {
+    padding: 12px;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .title {
+    font-size: 0.95rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .rating-badge {
+    padding: 5px 8px;
+    font-size: 0.78rem;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .location {
+    margin-bottom: 10px;
+    font-size: 0.78rem;
+  }
+
+  :host ::ng-deep .card-grid app-preview-card .price {
+    font-size: 0.9rem;
+  }
+}
+:host ::ng-deep .p-select {
+  display: flex;
+  align-items: center;
+}
+
+:host ::ng-deep .p-select-label {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  line-height: normal !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+:host ::ng-deep .p-select-overlay .p-select-option {
+  text-transform: none !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+}

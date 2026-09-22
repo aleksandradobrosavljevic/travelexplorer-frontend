@@ -1,0 +1,499 @@
+<div class="maps-page">
+  <div class="map-shell">
+    <div id="map"></div>
+
+    <div class="header-wrapper">
+      <app-header mode="full"></app-header>
+    </div>
+
+    <div class="map-overlay" *ngIf="showLocationPrompt()"></div>
+
+    <div class="location-modal" *ngIf="showLocationPrompt()">
+      <div class="location-modal__icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11Z" fill="#2A9D8F" />
+          <circle cx="12" cy="10" r="2.6" fill="#ffffff" />
+        </svg>
+      </div>
+      <h2>{{ 'map.enableLocation' | translate }}</h2>
+      <p>{{ 'map.enableLocationText' | translate }}</p>
+      <button class="modal-btn modal-btn--primary" (click)="allowLocation()">{{ 'map.allowAccess' | translate }}</button>
+      <button class="modal-btn modal-btn--secondary" (click)="notNow()">{{ 'map.notNow' | translate }}</button>
+    </div>
+
+    <ng-container *ngIf="!showLocationPrompt()">
+      <div class="search-tools">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="#1D3557" stroke-width="2" />
+            <path d="M16 16l4 4" stroke="#1D3557" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            type="text"
+            [ngModel]="destinationQuery()"
+            (ngModelChange)="destinationQuery.set($event); onDestinationSearchChange()"
+            [placeholder]="'map.searchDestination' | translate"
+            (click)="openDestinationSuggestions($event)"
+            (focus)="openDestinationSuggestions($event)"
+            (keyup.enter)="applyDestinationSearch()"
+          />
+          <button
+            *ngIf="destinationQuery()"
+            class="search-clear-btn"
+            type="button"
+            (click)="clearDestinationSearch($event)"
+            [attr.aria-label]="'common.clearSearch' | translate"
+          >&times;</button>
+
+          <div class="destination-suggestions" *ngIf="showDestinationSuggestions() && destinationSuggestions().length && !showFilterPanel()">
+            <button
+              type="button"
+              *ngFor="let destination of destinationSuggestions()"
+              (click)="selectDestinationSuggestion(destination)">
+              {{ destination.name }}
+            </button>
+          </div>
+        </div>
+
+        <div class="tool-buttons">
+          <button class="tool-btn" (click)="openFilterPanel()" [title]="'map.filters' | translate">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 7h8M16 7h4M10 7a2 2 0 1 0 4 0M4 12h4M12 12h8M8 12a2 2 0 1 0 4 0M4 17h10M18 17h2M14 17a2 2 0 1 0 4 0"
+                fill="none"
+                stroke="#1D3557"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+
+          <button
+            class="tool-btn"
+            [class.tool-btn--active]="showRoutePanel() || routeSummary()"
+            (click)="toggleRoutePanel()"
+            [title]="'map.route' | translate">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3L4.5 20.5l7.5-3.25 7.5 3.25L12 3Z"
+                fill="none"
+                stroke="#1D3557"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
+              <path d="M12 3v14.25" fill="none" stroke="#1D3557" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+
+          <button
+            class="tool-btn"
+            [class.tool-btn--active]="hasUserLocation()"
+            (click)="handleLocationButton()"
+            [title]="hasUserLocation() ? ('map.recenterLocation' | translate) : ('map.useLocation' | translate)">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="6.5" fill="none" stroke="#1D3557" stroke-width="2" />
+              <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="#1D3557" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button
+        *ngIf="returnToDetails()"
+        class="tool-btn map-return-btn"
+        type="button"
+        style="position:absolute;top:clamp(126px,calc(274px - 14.1vw),184px);left:clamp(10px,calc(19.3vw - 113px),78px);z-index:1500;width:auto;color:#1d3557;gap:8px;padding:0 14px;font-size:.92rem;font-weight:900;"
+        (click)="goBackToSourceDetails()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M9 12h10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+        </svg>
+        <span>{{ 'reviews.backToDetails' | translate }}</span>
+      </button>
+
+      <div
+        class="destination-notice"
+        style="position: absolute; top: 236px; left: 50%; z-index: 1450; width: min(420px, calc(100vw - 36px)); transform: translateX(-50%); display: grid; gap: 5px; padding: 14px 16px; border: 1px solid rgba(42, 157, 143, 0.22); border-radius: 18px; background: rgba(255, 255, 255, 0.96); box-shadow: 0 12px 26px rgba(29, 53, 87, 0.14); color: #526174;"
+        *ngIf="showDestinationNotice() && !showFilterPanel() && !showRoutePanel() && !showDetailsPanel()">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <strong style="color: #1d3557; font-size: 0.95rem; font-weight: 900;">{{ 'map.destinationNoticeTitle' | translate }}</strong>
+          <button
+            type="button"
+            (click)="dismissDestinationNotice()"
+            [attr.aria-label]="'common.close' | translate"
+            style="width: 28px; height: 28px; border: 0; border-radius: 50%; background: #eef6f3; color: #1d3557; cursor: pointer; font-size: 1.1rem; font-weight: 900; line-height: 1;">
+            &times;
+          </button>
+        </div>
+        <span style="font-size: 0.86rem; line-height: 1.45;">{{ 'map.destinationNoticeText' | translate }}</span>
+      </div>
+
+      <div class="filter-panel" *ngIf="showFilterPanel()">
+        <div class="filter-panel__head">
+          <h3>{{ 'map.filters' | translate }}</h3>
+          <div class="filter-panel__actions">
+            <button class="filter-clear-btn" type="button" (click)="clearFilters()">{{ 'common.clearAll' | translate }}</button>
+            <button
+              class="route-close-btn"
+              type="button"
+              (click)="closeFilterPanel()"
+              [attr.aria-label]="'common.close' | translate">
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-panel__scroll">
+          <div class="filter-group">
+            <h4>{{ 'map.searchItems' | translate }}</h4>
+            <div class="filter-search">
+              <input
+                type="text"
+                [ngModel]="itemSearchQuery()"
+                (ngModelChange)="itemSearchQuery.set($event); applyItemSearch()"
+                [placeholder]="'common.searchByName' | translate"
+              />
+              <button
+                *ngIf="itemSearchQuery()"
+                class="filter-search-clear-btn"
+                type="button"
+                (click)="clearItemSearch()"
+                [attr.aria-label]="'common.clearSearch' | translate"
+              >&times;</button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <h4>{{ 'map.ratingFilter' | translate }}</h4>
+            <p-select
+              [options]="ratingFilterOptions"
+              [ngModel]="ratingFilter()"
+              (ngModelChange)="setRatingFilter($event)"
+              optionLabel="labelKey"
+              optionValue="value">
+              <ng-template #selectedItem let-option>
+                {{ option.labelKey | translate }}
+              </ng-template>
+              <ng-template #item let-option>
+                {{ option.labelKey | translate }}
+              </ng-template>
+            </p-select>
+          </div>
+
+          <div class="filter-group">
+            <h4>{{ 'map.priceRange' | translate }}</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <input
+                class="filter-select"
+                type="number"
+                min="0"
+                inputmode="decimal"
+                [ngModel]="minPriceFilter()"
+                (ngModelChange)="setMinPriceFilter($event)"
+                [placeholder]="'map.minPrice' | translate"
+              />
+              <input
+                class="filter-select"
+                type="number"
+                min="0"
+                inputmode="decimal"
+                [ngModel]="maxPriceFilter()"
+                (ngModelChange)="setMaxPriceFilter($event)"
+                [placeholder]="'map.maxPrice' | translate"
+              />
+            </div>
+          </div>
+
+          <div class="filter-group" *ngFor="let group of filterGroups()">
+            <label class="filter-item filter-item--section">
+              <p-checkbox [ngModel]="group.checked" (ngModelChange)="group.checked = $event; toggleGroup(group)" [binary]="true"></p-checkbox>
+              <span>{{ getFilterGroupLabel(group) }}</span>
+            </label>
+            <div class="filter-subtypes">
+              <label class="filter-item filter-item--sub" *ngFor="let subtype of group.subtypes">
+                <p-checkbox [ngModel]="subtype.checked" (ngModelChange)="subtype.checked = $event; toggleSubtype(group)" [binary]="true"></p-checkbox>
+                <span>{{ subtype.name }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="route-panel" [class.route-panel--picking]="!!armedRoutePoint()" *ngIf="showRoutePanel()">
+        <div class="route-panel__head">
+          <h3>{{ 'map.routeTitle' | translate }}</h3>
+          <div class="route-panel__actions">
+            <button
+              class="route-clear-btn"
+              *ngIf="routeStart() || routeEnd() || routeSummary()"
+              type="button"
+              (click)="clearRoute()">
+              {{ 'map.routeClear' | translate }}
+            </button>
+            <button
+              class="route-close-btn"
+              type="button"
+              (click)="closeRoutePanel()"
+              [attr.aria-label]="'common.close' | translate">
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <div class="route-panel__body">
+          <div class="route-mode-control" role="group" [attr.aria-label]="'map.routeMode' | translate">
+            <button
+              type="button"
+              *ngFor="let option of routeModeOptions"
+              [class.route-mode-control__btn--active]="routeMode() === option.value"
+              (click)="setRouteMode(option.value)">
+              {{ option.labelKey | translate }}
+            </button>
+          </div>
+
+          <div class="route-point-card" [class.route-point-card--armed]="armedRoutePoint() === 'start'">
+            <div class="route-point-card__top">
+              <strong>{{ 'map.routeStart' | translate }}</strong>
+              <span *ngIf="routeStart()" class="route-lock-badge">{{ 'map.routeLocked' | translate }}</span>
+              <span *ngIf="armedRoutePoint() === 'start'" class="route-armed-badge">{{ 'map.routeSelecting' | translate }}</span>
+            </div>
+            <p>{{ routePointText('start') }}</p>
+            <div class="route-address-search">
+              <input
+                type="text"
+                [ngModel]="routeAddressQueryText('start')"
+                (ngModelChange)="onRouteAddressQueryChange('start', $event)"
+                (focus)="openRouteAddressSearch('start')"
+                (keydown.enter)="searchRouteAddress('start', $event)"
+                [placeholder]="'map.routeAddressPlaceholder' | translate"
+              />
+              <button
+                type="button"
+                class="route-address-submit"
+                [disabled]="routeAddressLoading() === 'start'"
+                (click)="searchRouteAddress('start', $event)">
+                {{ 'map.routeAddressSearch' | translate }}
+              </button>
+            </div>
+            <div class="route-address-results" *ngIf="routeAddressOpen() === 'start'">
+              <button
+                type="button"
+                *ngFor="let result of routeAddressResults().start"
+                (click)="selectRouteAddress('start', result, $event)">
+                {{ result.label }}
+              </button>
+              <span *ngIf="routeAddressLoading() === 'start'">{{ 'map.routeAddressLoading' | translate }}</span>
+              <span *ngIf="routeAddressNoResults('start')">{{ 'map.routeAddressNoResults' | translate }}</span>
+            </div>
+            <div class="route-point-card__actions">
+              <button type="button" (click)="armRoutePoint('start')">{{ routeActionLabel('start') }}</button>
+              <button type="button" *ngIf="hasUserLocation()" (click)="refreshRouteStartFromUserLocation()">
+                {{ 'map.routeRefreshStart' | translate }}
+              </button>
+            </div>
+          </div>
+
+          <div class="route-point-card" [class.route-point-card--armed]="armedRoutePoint() === 'end'">
+            <div class="route-point-card__top">
+              <strong>{{ 'map.routeEnd' | translate }}</strong>
+              <span *ngIf="routeEnd()" class="route-lock-badge">{{ 'map.routeLocked' | translate }}</span>
+              <span *ngIf="armedRoutePoint() === 'end'" class="route-armed-badge">{{ 'map.routeSelecting' | translate }}</span>
+            </div>
+            <p>{{ routePointText('end') }}</p>
+            <div class="route-address-search">
+              <input
+                type="text"
+                [ngModel]="routeAddressQueryText('end')"
+                (ngModelChange)="onRouteAddressQueryChange('end', $event)"
+                (focus)="openRouteAddressSearch('end')"
+                (keydown.enter)="searchRouteAddress('end', $event)"
+                [placeholder]="'map.routeAddressPlaceholder' | translate"
+              />
+              <button
+                type="button"
+                class="route-address-submit"
+                [disabled]="routeAddressLoading() === 'end'"
+                (click)="searchRouteAddress('end', $event)">
+                {{ 'map.routeAddressSearch' | translate }}
+              </button>
+            </div>
+            <div class="route-address-results" *ngIf="routeAddressOpen() === 'end'">
+              <button
+                type="button"
+                *ngFor="let result of routeAddressResults().end"
+                (click)="selectRouteAddress('end', result, $event)">
+                {{ result.label }}
+              </button>
+              <span *ngIf="routeAddressLoading() === 'end'">{{ 'map.routeAddressLoading' | translate }}</span>
+              <span *ngIf="routeAddressNoResults('end')">{{ 'map.routeAddressNoResults' | translate }}</span>
+            </div>
+            <div class="route-point-card__actions">
+              <button type="button" (click)="armRoutePoint('end')">{{ routeActionLabel('end') }}</button>
+            </div>
+          </div>
+
+          <div class="route-status route-status--loading" *ngIf="routeLoading()">
+            {{ 'map.routeLoading' | translate }}
+          </div>
+
+          <div class="route-status route-status--error" *ngIf="routeError() && !routeLoading()">
+            {{ routeError() }}
+          </div>
+
+          <div class="route-summary" *ngIf="routeSummary() as summary">
+            <span>{{ formatRouteDistance(summary.distanceMeters) }}</span>
+            <span>{{ formatRouteDuration(summary.durationSeconds) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-panel" *ngIf="showDetailsPanel() && selectedItem()">
+        <button class="details-close-btn" (click)="closeDetails()" [attr.aria-label]="'common.close' | translate">
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div class="details-image-wrap">
+          <img class="details-image" [src]="selectedItem()!.image" [alt]="selectedItem()!.name" />
+          <span
+            class="details-type-badge"
+            [class.details-type-badge--object]="selectedItem()!.markerType === 'Object'"
+            [class.details-type-badge--event]="selectedItem()!.markerType === 'Event'"
+            [class.details-type-badge--activity]="selectedItem()!.markerType === 'Activity'"
+          >{{ selectedItem()!.subType || selectedItem()!.markerType }}</span>
+        </div>
+
+        <div class="details-body">
+          <div class="details-heading-row">
+            <h2 class="details-name">{{ selectedItem()!.name }}</h2>
+            <button
+              class="map-favourite-btn"
+              type="button"
+              [class.map-favourite-btn--saved]="selectedItem()!.isFavorite"
+              (click)="toggleFavourite(selectedItem()!, $event)"
+              [attr.aria-label]="'favourites.toggleFavourite' | translate">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <p class="details-address">
+            <svg viewBox="0 0 24 24" width="11" height="11" style="flex-shrink:0">
+              <path d="M12 21s6-5.5 6-11a6 6 0 1 0-12 0c0 5.5 6 11 6 11Z" fill="none" stroke="#8a97a8" stroke-width="2"/>
+              <circle cx="12" cy="10" r="2" fill="#8a97a8"/>
+            </svg>
+            {{ selectedItem()!.address || selectedItem()!.subType || selectedItem()!.markerType }}
+          </p>
+
+          <div class="details-chips">
+            <span class="details-chip">
+              <svg viewBox="0 0 24 24" width="11" height="11">
+                <path d="M12 4.5l2.3 4.7 5.2.8-3.8 3.7.9 5.2L12 16.7 7.4 19l.9-5.2-3.8-3.7 5.2-.8L12 4.5Z" fill="#f5a623" stroke="#f5a623" stroke-width="1" stroke-linejoin="round"/>
+              </svg>
+              {{ selectedItem()!.rating | number:'1.1-1' }}
+            </span>
+            <span class="details-chip">
+              {{ selectedItem()!.reviewCount }} {{ reviewsLabel(selectedItem()!.reviewCount) }}
+            </span>
+            <span class="details-chip details-chip--price" *ngIf="hasDisplayPrice(selectedItem()!)">
+              {{ formatPrice(selectedItem()!.price, selectedItem()!.currency) }}{{ selectedItem()!.price ? getPriceSuffix(selectedItem()!.category) : '' }}
+            </span>
+          </div>
+
+          <p class="details-description" *ngIf="selectedItem()!.description">{{ selectedItem()!.description }}</p>
+
+          <div class="map-reviews" *ngIf="selectedItem()!.recentReviews.length">
+            <article class="map-review-card" *ngFor="let review of selectedItem()!.recentReviews">
+              <div class="map-review-card__top">
+                <strong>{{ review.author }}</strong>
+                <span>{{ review.rating }}/5</span>
+              </div>
+              <p>{{ review.comment }}</p>
+            </article>
+          </div>
+
+          <button class="details-open-btn" (click)="goToDetailsPage()">
+            {{ 'map.viewFullDetails' | translate }}
+            <svg viewBox="0 0 24 24" width="12" height="12" style="margin-left:5px">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="nearby-strip" *ngIf="showNearbyStrip() && !showFilterPanel() && !showRoutePanel()" [class.nearby-strip--collapsed]="isNearbyCollapsed()">
+        <div class="nearby-strip__top">
+          <span class="nearby-badge nearby-badge--large">{{ 'map.topNearby' | translate }}</span>
+          <button class="nearby-arrow" [class.nearby-arrow--collapsed]="isNearbyCollapsed()" (click)="toggleNearbyPanel()" type="button" [attr.aria-label]="'map.topNearby' | translate">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 10l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+          </button>
+        </div>
+
+        <div class="nearby-grid" *ngIf="!isNearbyCollapsed()">
+          <div class="nearby-card" *ngFor="let item of sortedNearbyItems()">
+            <div class="nearby-card__image-wrap">
+              <img [src]="item.image" [alt]="item.name" />
+              <span
+                class="nearby-type-badge"
+                [class.nearby-type-badge--object]="item.markerType === 'Object'"
+                [class.nearby-type-badge--event]="item.markerType === 'Event'"
+                [class.nearby-type-badge--activity]="item.markerType === 'Activity'"
+              >{{ item.subType || item.markerType }}</span>
+              <div class="nearby-rating-chip">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 4.5l2.3 4.7 5.2.8-3.8 3.7.9 5.2L12 16.7 7.4 19l.9-5.2-3.8-3.7 5.2-.8L12 4.5Z"
+                    fill="#f5a623"
+                    stroke="#f5a623"
+                    stroke-width="1"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                {{ item.rating | number:'1.1-1' }}
+              </div>
+              <button
+                class="nearby-favourite-btn"
+                type="button"
+                [class.nearby-favourite-btn--saved]="item.isFavorite"
+                (click)="toggleFavourite(item, $event)"
+                [attr.aria-label]="'favourites.toggleFavourite' | translate">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div class="nearby-card__body">
+              <p class="nearby-card__name">{{ item.name }}</p>
+              <p class="nearby-card__address">
+                <svg viewBox="0 0 24 24" width="10" height="10" style="flex-shrink:0">
+                  <path d="M12 21s6-5.5 6-11a6 6 0 1 0-12 0c0 5.5 6 11 6 11Z" fill="none" stroke="#8a97a8" stroke-width="2"/>
+                  <circle cx="12" cy="10" r="2" fill="#8a97a8"/>
+                </svg>
+                {{ item.address || item.subType }}
+              </p>
+              <div class="nearby-bottom-row">
+                <span class="nearby-price" *ngIf="hasDisplayPrice(item)">{{ formatPrice(item.price, item.currency) }}{{ item.price ? getPriceSuffix(item.category) : '' }}</span>
+                <button class="details-link" (click)="goToDetailsPage(item, $event)">{{ 'common.details' | translate }} &rarr;</button>
+              </div>
+              <div class="nearby-review" *ngIf="item.recentReviews[0] as review">
+                <strong>{{ review.author }}</strong>
+                <span>{{ review.comment }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

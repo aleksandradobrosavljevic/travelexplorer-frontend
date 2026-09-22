@@ -1,0 +1,621 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div>
+      <h1>Content management</h1>
+    </div>
+  </div>
+
+  <ng-container>
+    <section class="table-card">
+      <div class="card-header">
+        <div class="tab-row">
+          <button type="button" class="tab-btn tab-objects"
+            [class.active]="activeContentTable() === 'objects'"
+            (click)="activeContentTable.set('objects')">
+            Objects <span class="tab-pill">{{ objectTotalCount() }}</span>
+          </button>
+          <button type="button" class="tab-btn tab-activities"
+            [class.active]="activeContentTable() === 'activities'"
+            (click)="activeContentTable.set('activities')">
+            Activities <span class="tab-pill">{{ activityTotalCount() }}</span>
+          </button>
+          <button type="button" class="tab-btn tab-events"
+            [class.active]="activeContentTable() === 'events'"
+            (click)="activeContentTable.set('events')">
+            Events <span class="tab-pill">{{ eventTotalCount() }}</span>
+          </button>
+        </div>
+        <div class="header-actions">
+          <span class="count-pill" *ngIf="activeContentTable() === 'objects'">{{ objectTotalCount() }} results</span>
+          <span class="count-pill" *ngIf="activeContentTable() === 'activities'">{{ activityTotalCount() }} results</span>
+          <span class="count-pill" *ngIf="activeContentTable() === 'events'">{{ eventTotalCount() }} results</span>
+          <button type="button" class="primary-btn" (click)="openModal(null)">Add content</button>
+        </div>
+      </div>
+
+      <ng-container *ngIf="activeContentTable() === 'objects'">
+        <div class="filters-row">
+          <div class="filter-group search-group">
+            <label for="objectSearch">Search</label>
+            <input id="objectSearch" [value]="objectSearch()"
+              (input)="objectSearch.set($any($event.target).value); onObjectSearchChange()"
+              type="text" placeholder="Object or type" />
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <p-select inputId="objectStatus" [options]="statusFilterOptions"
+              [ngModel]="objectStatusFilter()" (ngModelChange)="objectStatusFilter.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="false"
+              (onChange)="onObjectStatusChange()" styleClass="status-filter-select">
+            </p-select>
+          </div>
+          <div class="filter-group">
+            <label>Active</label>
+            <p-select inputId="objectActive" [options]="activeFilterOptions"
+              [ngModel]="objectActiveFilter()" (ngModelChange)="objectActiveFilter.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="false"
+              (onChange)="onObjectActiveChange()" styleClass="status-filter-select">
+            </p-select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Status</th><th>Active</th><th>Address</th>
+                <th class="actions-cell">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of objects()" class="clickable-row" [class.inactive-row]="!item.isActive" (click)="goToContentDetail('object', item)">
+                <td><strong>{{ item.name }}</strong><div class="muted-text">{{ item.description || 'No description.' }}</div></td>
+                <td>{{ item.objectTypeName }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="{'approved': item.statusName.toLowerCase() === 'approved','pending': item.statusName.toLowerCase() === 'pending','rejected': item.statusName.toLowerCase() === 'rejected'}">
+                    {{ item.statusName }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
+                    {{ item.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>{{ item.address || 'n/a' }}</td>
+                <td class="actions-cell">
+                  <div class="action-row">
+                    <button type="button" class="action-btn map-btn"
+                      [disabled]="!hasCoordinates('object', item)"
+                      [class.disabled-btn]="!hasCoordinates('object', item)"
+                      (click)="$event.stopPropagation(); showOnMap('object', item)">Show on map</button>
+                    <button type="button" class="action-btn edit-btn" (click)="$event.stopPropagation(); editObject(item)">Edit</button>
+                    <button type="button" class="action-btn"
+                      [class.deactivate-btn]="item.isActive"
+                      [class.activate-btn]="!item.isActive"
+                      (click)="$event.stopPropagation(); requestToggleObjectActive(item)">
+                      {{ item.isActive ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!objects().length">
+                <td colspan="6" class="empty-row">No objects matched the selected filters.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p-paginator
+          *ngIf="objectTotalCount() > 0"
+          [rows]="objectPageSize()"
+          [totalRecords]="objectTotalCount()"
+          [first]="(objectPage() - 1) * objectPageSize()"
+          [rowsPerPageOptions]="pageSizeOptions"
+          (onPageChange)="onObjectPageChange($event)"
+          styleClass="content-paginator">
+        </p-paginator>
+      </ng-container>
+
+      <ng-container *ngIf="activeContentTable() === 'activities'">
+        <div class="filters-row">
+          <div class="filter-group search-group">
+            <label for="activitySearch">Search</label>
+            <input id="activitySearch" [value]="activitySearch()"
+              (input)="activitySearch.set($any($event.target).value); onActivitySearchChange()"
+              type="text" placeholder="Activity or type" />
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <p-select inputId="activityStatus" [options]="statusFilterOptions"
+              [ngModel]="activityStatusFilter()" (ngModelChange)="activityStatusFilter.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="false"
+              (onChange)="onActivityStatusChange()" styleClass="status-filter-select">
+            </p-select>
+          </div>
+          <div class="filter-group">
+            <label>Active</label>
+            <p-select inputId="activityActive" [options]="activeFilterOptions"
+              [ngModel]="activityActiveFilter()" (ngModelChange)="activityActiveFilter.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="false"
+              (onChange)="onActivityActiveChange()" styleClass="status-filter-select">
+            </p-select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Object</th><th>Status</th><th>Active</th>
+                <th>Price</th><th class="actions-cell">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of activities()" class="clickable-row" [class.inactive-row]="!item.isActive" (click)="goToContentDetail('activity', item)">
+                <td><strong>{{ item.name }}</strong><div class="muted-text">{{ item.description || 'No description.' }}</div></td>
+                <td>{{ item.activityTypeName }}</td>
+                <td>{{ findObjectName(item.objectId) }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="{'approved': item.statusName.toLowerCase() === 'approved','pending': item.statusName.toLowerCase() === 'pending','rejected': item.statusName.toLowerCase() === 'rejected'}">
+                    {{ item.statusName }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
+                    {{ item.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>{{ item.currency || 'EUR' }} {{ item.price ?? 0 }}</td>
+                <td class="actions-cell">
+                  <div class="action-row">
+                    <button type="button" class="action-btn map-btn"
+                      [disabled]="!hasCoordinates('activity', item)"
+                      [class.disabled-btn]="!hasCoordinates('activity', item)"
+                      (click)="$event.stopPropagation(); showOnMap('activity', item)">Show on map</button>
+                    <button type="button" class="action-btn edit-btn" (click)="$event.stopPropagation(); editActivity(item)">Edit</button>
+                    <button type="button" class="action-btn"
+                      [class.deactivate-btn]="item.isActive"
+                      [class.activate-btn]="!item.isActive"
+                      (click)="$event.stopPropagation(); requestToggleActivityActive(item)">
+                      {{ item.isActive ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!activities().length">
+                <td colspan="7" class="empty-row">No activities matched the selected filters.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p-paginator
+          *ngIf="activityTotalCount() > 0"
+          [rows]="activityPageSize()"
+          [totalRecords]="activityTotalCount()"
+          [first]="(activityPage() - 1) * activityPageSize()"
+          [rowsPerPageOptions]="pageSizeOptions"
+          (onPageChange)="onActivityPageChange($event)"
+          styleClass="content-paginator">
+        </p-paginator>
+      </ng-container>
+
+      <ng-container *ngIf="activeContentTable() === 'events'">
+        <div class="filters-row">
+          <div class="filter-group search-group">
+            <label for="eventSearch">Search</label>
+            <input id="eventSearch" [value]="eventSearch()"
+              (input)="eventSearch.set($any($event.target).value); onEventSearchChange()"
+              type="text" placeholder="Event or type" />
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <p-select inputId="eventStatus" [options]="statusFilterOptions"
+              [ngModel]="eventStatusFilter()" (ngModelChange)="eventStatusFilter.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="false"
+              (onChange)="onEventStatusChange()" styleClass="status-filter-select">
+            </p-select>
+          </div>
+          <div class="filter-group">
+            <label>Active</label>
+            <p-select inputId="eventActive" [options]="activeFilterOptions"
+              [ngModel]="eventActiveFilter()" (ngModelChange)="eventActiveFilter.set($event)"
+              optionLabel="label" optionValue="value" [showClear]="false"
+              (onChange)="onEventActiveChange()" styleClass="status-filter-select">
+            </p-select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Object</th><th>Status</th><th>Active</th>
+                <th>Start</th><th>Price</th><th class="actions-cell">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of events()" class="clickable-row" [class.inactive-row]="!item.isActive" (click)="goToContentDetail('event', item)">
+                <td><strong>{{ item.name }}</strong><div class="muted-text">{{ item.description || 'No description.' }}</div></td>
+                <td>{{ item.eventTypeName }}</td>
+                <td>{{ findObjectName(item.objectId) }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="{'approved': item.statusName.toLowerCase() === 'approved','pending': item.statusName.toLowerCase() === 'pending','rejected': item.statusName.toLowerCase() === 'rejected'}">
+                    {{ item.statusName }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
+                    {{ item.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>{{ item.startDatetime | date:'dd.MM.yyyy HH:mm' }}</td>
+                <td>{{ item.currency || 'EUR' }} {{ item.price ?? 0 }}</td>
+                <td class="actions-cell">
+                  <div class="action-row">
+                    <button type="button" class="action-btn map-btn"
+                      [disabled]="!hasCoordinates('event', item)"
+                      [class.disabled-btn]="!hasCoordinates('event', item)"
+                      (click)="$event.stopPropagation(); showOnMap('event', item)">Show on map</button>
+                    <button type="button" class="action-btn edit-btn" (click)="$event.stopPropagation(); editEvent(item)">Edit</button>
+                    <button type="button" class="action-btn"
+                      [class.deactivate-btn]="item.isActive"
+                      [class.activate-btn]="!item.isActive"
+                      (click)="$event.stopPropagation(); requestToggleEventActive(item)">
+                      {{ item.isActive ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!events().length">
+                <td colspan="8" class="empty-row">No events matched the selected filters.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p-paginator
+          *ngIf="eventTotalCount() > 0"
+          [rows]="eventPageSize()"
+          [totalRecords]="eventTotalCount()"
+          [first]="(eventPage() - 1) * eventPageSize()"
+          [rowsPerPageOptions]="pageSizeOptions"
+          (onPageChange)="onEventPageChange($event)"
+          styleClass="content-paginator">
+        </p-paginator>
+      </ng-container>
+    </section>
+  </ng-container>
+
+  <app-rejection-reason-dialog
+    [isOpen]="rejectionReasonDialogOpen()"
+    title="Rejection reason"
+    [message]="rejectionReasonDialogMessage()"
+    confirmLabel="Continue"
+    (confirmed)="confirmRejectionReason($event)"
+    (cancelled)="cancelRejectionReason()">
+  </app-rejection-reason-dialog>
+
+  <app-confirm-dialog
+    [isOpen]="confirmDialogOpen()"
+    [title]="confirmDialogTitle()"
+    [message]="confirmDialogMessage()"
+    [confirmLabel]="confirmDialogLabel()"
+    [danger]="confirmDialogDanger()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelPendingAction()">
+  </app-confirm-dialog>
+</section>
+
+<div class="modal-overlay" *ngIf="modalOpen()">
+  <div class="modal-panel">
+
+    <ng-container *ngIf="modalType() === null">
+      <div class="modal-header">
+        <h2>Add content</h2>
+        <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body modal-type-picker">
+        <p class="card-subtitle">What would you like to add?</p>
+        <div class="type-picker-grid">
+          <button type="button" class="type-picker-btn" (click)="openModal('object')">
+            <span class="type-picker-label">Object</span>
+            <span class="type-picker-hint">A place or point of interest</span>
+          </button>
+          <button type="button" class="type-picker-btn" (click)="openModal('activity')">
+            <span class="type-picker-label">Activity</span>
+            <span class="type-picker-hint">Something tourists can do</span>
+          </button>
+          <button type="button" class="type-picker-btn" (click)="openModal('event')">
+            <span class="type-picker-label">Event</span>
+            <span class="type-picker-hint">A scheduled event with date</span>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ── OBJECT MODAL ── -->
+    <ng-container *ngIf="modalType() === 'object'">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <button type="button" class="modal-back-btn" *ngIf="!editingObjectId()" (click)="modalType.set(null)">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <h2>{{ editingObjectId() ? 'Edit object' : 'Add object' }}</h2>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <label class="field"><span>Name</span><input [(ngModel)]="objectForm.name" type="text" (ngModelChange)="bumpFormVersion()" /></label>
+          <label class="field"><span>Type</span>
+            <p-select [options]="objectTypes()" [(ngModel)]="objectForm.objectTypeId" (ngModelChange)="bumpFormVersion()"
+              optionLabel="name" optionValue="id" [showClear]="false" placeholder="Select a type" styleClass="form-field-select">
+            </p-select>
+          </label>
+          <label class="field">
+            <span>Phone <span class="optional-tag">Optional</span></span>
+            <input
+              [ngModel]="objectForm.phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              [placeholder]="phonePlaceholder"
+              (ngModelChange)="onObjectPhoneChange($event)" />
+            <small class="field-hint">{{ phoneHelperText }}</small>
+          </label>
+          <label class="field">
+            <span>Website <span class="optional-tag">Optional</span></span>
+            <input [(ngModel)]="objectForm.website" type="url" inputmode="url" [placeholder]="websitePlaceholder" (ngModelChange)="bumpFormVersion()" />
+            <small class="field-hint">{{ urlHelperText }}</small>
+          </label>
+          <label class="field">
+            <span>Airbnb URL <span class="optional-tag">Optional</span></span>
+            <input [(ngModel)]="objectForm.airbnbUrl" type="url" inputmode="url" [placeholder]="airbnbUrlPlaceholder" (ngModelChange)="bumpFormVersion()" />
+            <small class="field-hint">{{ urlHelperText }}</small>
+          </label>
+          <label class="field">
+            <span>Booking URL <span class="optional-tag">Optional</span></span>
+            <input [(ngModel)]="objectForm.bookingUrl" type="url" inputmode="url" [placeholder]="bookingUrlPlaceholder" (ngModelChange)="bumpFormVersion()" />
+            <small class="field-hint">{{ urlHelperText }}</small>
+          </label>
+          <div class="field field--wide image-field">
+            <span>Images <span class="optional-tag">Optional</span></span>
+            <input #objectImageInput type="file" accept="image/jpeg,image/png,image/webp" multiple (change)="onObjectImageChange($event)" hidden />
+            <div class="image-strip" (pointerdown)="startImageStripDrag($event)" (pointermove)="dragImageStrip($event)" (pointerup)="endImageStripDrag($event)" (pointercancel)="endImageStripDrag($event)" (pointerleave)="endImageStripDrag($event)">
+              <div class="image-thumb" *ngFor="let preview of objectImagePreviews(); let i = index">
+                <img [src]="preview" (pointerdown)="$event.stopPropagation()" alt="Preview" (click)="openImageLightbox(preview, $event)" />
+                <button type="button" class="image-remove-btn" (pointerdown)="$event.stopPropagation()" (click)="$event.stopPropagation(); removeObjectImage(i)" aria-label="Remove image">x</button>
+              </div>
+            </div>
+            <button *ngIf="objectRemainingImageSlots() > 0" type="button" class="image-add-btn" (click)="objectImageInput.click()">
+              + Add images ({{ objectRemainingImageSlots() }} remaining)
+            </button>
+            <small class="field-hint">{{ imageUploadHint }}</small>
+            <small class="field-error" *ngIf="objectImageError()">{{ objectImageError() }}</small>
+          </div>
+          <div class="field field--wide">
+            <span>Address <span class="optional-tag">Optional</span></span>
+            <input #objectAddressInput autocomplete="off" id="obj-address-input"
+              [value]="objectAddress() ?? ''"
+              (input)="objectAddress.set($any($event.target).value); onObjectAddressInput()"
+              (keydown)="onObjectAddressKeydown($event)"
+              type="text" placeholder="Type to search or click on the map" />
+          </div>
+          <ng-template #objectSuggestionsTemplate>
+            <div class="suggestions-dropdown">
+              <div class="suggestion-item" *ngFor="let s of objectAddressSuggestions(); let i = index" [id]="'obj-suggestion-' + i" (mousedown)="selectObjectSuggestion(s)">
+                <span class="suggestion-main">{{ s.address?.road || s.address?.suburb || s.address?.neighbourhood || s.name }}</span>
+                <span class="suggestion-secondary">{{ s.address?.city || s.address?.town || s.address?.village || '' }}</span>
+              </div>
+            </div>
+          </ng-template>
+          <div class="field field--wide">
+            <span>Location</span>
+            <div id="object-map" class="modal-map"></div>
+            <p class="map-hint muted-text" *ngIf="!objectLocationSet()">Click on the map to set location</p>
+          </div>
+          <!-- Description with counter -->
+          <div class="field field--wide">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+              <span>Description <span class="optional-tag">Optional</span></span>
+              <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+                [style.color]="objectForm.description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                {{ objectForm.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+              </span>
+            </div>
+            <textarea
+              [ngModel]="objectForm.description"
+              (ngModelChange)="onObjectDescriptionChange($event)"
+              [maxlength]="DESCRIPTION_MAX_LENGTH"
+              rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-actions">
+          <button type="button" class="primary-btn" (click)="submitObject()" [disabled]="!objectFormDirty()">{{ editingObjectId() ? 'Save object' : 'Create object' }}</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ── ACTIVITY MODAL ── -->
+    <ng-container *ngIf="modalType() === 'activity'">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <button type="button" class="modal-back-btn" *ngIf="!editingActivityId()" (click)="modalType.set(null)">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <h2>{{ editingActivityId() ? 'Edit activity' : 'Add activity' }}</h2>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <label class="field"><span>Name</span><input [(ngModel)]="activityForm.name" type="text" (ngModelChange)="bumpFormVersion()"/></label>
+          <label class="field"><span>Type</span>
+            <p-select [options]="activityTypes()" [(ngModel)]="activityForm.activityTypeId" (ngModelChange)="bumpFormVersion()"
+              optionLabel="name" optionValue="id" [showClear]="false" placeholder="Select a type" styleClass="form-field-select">
+            </p-select>
+          </label>
+          <label class="field"><span>Object <span class="optional-tag">Optional</span></span>
+            <p-select [options]="approvedObjects()" [(ngModel)]="activityForm.objectId" (ngModelChange)="bumpFormVersion()"
+              (onChange)="onActivityObjectChange()" optionLabel="name" optionValue="id"
+              [showClear]="true" placeholder="No linked object" styleClass="form-field-select">
+            </p-select>
+          </label>
+          <label class="field"><span>Duration (min) <span class="optional-tag">Optional</span></span><input [(ngModel)]="activityForm.durationMinutes" type="number" min="0" placeholder="60" (ngModelChange)="bumpFormVersion()"
+            (blur)="activityForm.durationMinutes = clampToPositive(activityForm.durationMinutes)"/></label>
+          <label class="field"><span>Price <span class="optional-tag">Optional</span></span><input [(ngModel)]="activityForm.price" type="number" min="0" placeholder="15.00" (ngModelChange)="bumpFormVersion()"
+            (blur)="activityForm.price = clampToPositive(activityForm.price)"/></label>
+          <label class="field"><span>Currency <span class="optional-tag">Optional</span></span><input [(ngModel)]="activityForm.currency" type="text" (ngModelChange)="bumpFormVersion()" /></label>
+          <div class="field field--wide image-field">
+            <span>Images <span class="optional-tag">Optional</span></span>
+            <input #activityImageInput type="file" accept="image/jpeg,image/png,image/webp" multiple (change)="onActivityImageChange($event)" hidden />
+            <div class="image-strip" (pointerdown)="startImageStripDrag($event)" (pointermove)="dragImageStrip($event)" (pointerup)="endImageStripDrag($event)" (pointercancel)="endImageStripDrag($event)" (pointerleave)="endImageStripDrag($event)">
+              <div class="image-thumb" *ngFor="let preview of activityImagePreviews(); let i = index">
+                <img [src]="preview" (pointerdown)="$event.stopPropagation()" alt="Preview" (click)="openImageLightbox(preview, $event)" />
+                <button type="button" class="image-remove-btn" (pointerdown)="$event.stopPropagation()" (click)="$event.stopPropagation(); removeActivityImage(i)" aria-label="Remove image">x</button>
+              </div>
+            </div>
+            <button *ngIf="activityRemainingImageSlots() > 0" type="button" class="image-add-btn" (click)="activityImageInput.click()">
+              + Add images ({{ activityRemainingImageSlots() }} remaining)
+            </button>
+            <small class="field-hint">{{ imageUploadHint }}</small>
+            <small class="field-error" *ngIf="activityImageError()">{{ activityImageError() }}</small>
+          </div>
+          <div class="field field--wide">
+            <span>Address <span class="optional-tag">Optional</span></span>
+            <input #activityAddressInput autocomplete="off" id="act-address-input"
+              [value]="activityAddress() ?? ''"
+              (input)="activityAddress.set($any($event.target).value); onActivityAddressInput()"
+              (keydown)="onActivityAddressKeydown($event)"
+              type="text" placeholder="Type to search or click on the map"
+              [disabled]="!!activityForm.objectId" />
+          </div>
+          <ng-template #activitySuggestionsTemplate>
+            <div class="suggestions-dropdown">
+              <div class="suggestion-item" *ngFor="let s of activityAddressSuggestions(); let i = index" [id]="'act-suggestion-' + i" (mousedown)="selectActivitySuggestion(s)">
+                <span class="suggestion-main">{{ s.address?.road || s.address?.suburb || s.address?.neighbourhood || s.name }}</span>
+                <span class="suggestion-secondary">{{ s.address?.city || s.address?.town || s.address?.village || '' }}</span>
+              </div>
+            </div>
+          </ng-template>
+          <div class="field field--wide">
+            <span>Location</span>
+            <div id="activity-map" class="modal-map"></div>
+            <p class="map-hint muted-text" *ngIf="!activityLocationSet()">Click on the map to set location</p>
+            <p class="map-hint muted-text" *ngIf="activityLocationSet() && activityForm.objectId">Location inherited from linked object</p>
+          </div>
+          <!-- Description with counter -->
+          <div class="field field--wide">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+              <span>Description <span class="optional-tag">Optional</span></span>
+              <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+                [style.color]="activityForm.description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                {{ activityForm.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+              </span>
+            </div>
+            <textarea
+              [ngModel]="activityForm.description"
+              (ngModelChange)="onActivityDescriptionChange($event)"
+              [maxlength]="DESCRIPTION_MAX_LENGTH"
+              rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-actions">
+          <button type="button" class="primary-btn" (click)="submitActivity()" [disabled]="!activityFormDirty()">{{ editingActivityId() ? 'Save activity' : 'Create activity' }}</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ── EVENT MODAL ── -->
+    <ng-container *ngIf="modalType() === 'event'">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <button type="button" class="modal-back-btn" *ngIf="!editingEventId()" (click)="modalType.set(null)">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <h2>{{ editingEventId() ? 'Edit event' : 'Add event' }}</h2>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <label class="field"><span>Name</span><input [(ngModel)]="eventForm.name" type="text" (ngModelChange)="bumpFormVersion()"/></label>
+          <label class="field"><span>Type</span>
+            <p-select [options]="eventTypes()" [(ngModel)]="eventForm.eventTypeId" (ngModelChange)="bumpFormVersion()"
+              optionLabel="name" optionValue="id" [showClear]="false" placeholder="Select a type" styleClass="form-field-select">
+            </p-select>
+          </label>
+          <label class="field"><span>Connected object</span>
+            <p-select [options]="approvedObjects()" [(ngModel)]="eventForm.objectId" (ngModelChange)="bumpFormVersion()"
+              (onChange)="onEventObjectChange()" optionLabel="name" optionValue="id"
+              [showClear]="false" placeholder="Select an object" styleClass="form-field-select">
+            </p-select>
+          </label>
+          <div class="field field--wide">
+            <span>Object location</span>
+            <div id="event-map" class="modal-map"></div>
+          </div>
+          <div class="field">
+            <span>Start</span>
+            <p-datepicker [(ngModel)]="eventForm.startDatetime" appendTo="body" [baseZIndex]="11000"
+              [showTime]="true" [hourFormat]="'24'" [showIcon]="true" [hideOnDateTimeSelect]="false"
+              dateFormat="dd.mm.yy" placeholder="Select date and time" (ngModelChange)="bumpFormVersion()"
+              [minDate]="minDateTime" />
+          </div>
+          <div class="field">
+            <span>End <span class="optional-tag">Optional</span></span>
+            <p-datepicker [(ngModel)]="eventForm.endDatetime" appendTo="body" [baseZIndex]="11000"
+              [showTime]="true" [hourFormat]="'24'" [showIcon]="true" [hideOnDateTimeSelect]="false"
+              dateFormat="dd.mm.yy" placeholder="Select date and time" (ngModelChange)="bumpFormVersion()"
+              [minDate]="endMinDateTime" />
+          </div>
+          <label class="field"><span>Capacity <span class="optional-tag">Optional</span></span><input [(ngModel)]="eventForm.capacity" type="number" min="0" placeholder="100" (ngModelChange)="bumpFormVersion()"
+            (blur)="eventForm.capacity = clampToPositive(eventForm.capacity)"/></label>
+          <label class="field"><span>Price <span class="optional-tag">Optional</span></span><input [(ngModel)]="eventForm.price" type="number" min="0" placeholder="15.00" (ngModelChange)="bumpFormVersion()"
+            (blur)="eventForm.price = clampToPositive(eventForm.price)"/></label>
+          <label class="field"><span>Currency <span class="optional-tag">Optional</span></span><input [(ngModel)]="eventForm.currency" type="text" (ngModelChange)="bumpFormVersion()" /></label>
+          <div class="field field--wide image-field">
+            <span>Images <span class="optional-tag">Optional</span></span>
+            <input #eventImageInput type="file" accept="image/jpeg,image/png,image/webp" multiple (change)="onEventImageChange($event)" hidden />
+            <div class="image-strip" (pointerdown)="startImageStripDrag($event)" (pointermove)="dragImageStrip($event)" (pointerup)="endImageStripDrag($event)" (pointercancel)="endImageStripDrag($event)" (pointerleave)="endImageStripDrag($event)">
+              <div class="image-thumb" *ngFor="let preview of eventImagePreviews(); let i = index">
+                <img [src]="preview" (pointerdown)="$event.stopPropagation()" alt="Preview" (click)="openImageLightbox(preview, $event)" />
+                <button type="button" class="image-remove-btn" (pointerdown)="$event.stopPropagation()" (click)="$event.stopPropagation(); removeEventImage(i)" aria-label="Remove image">x</button>
+              </div>
+            </div>
+            <button *ngIf="eventRemainingImageSlots() > 0" type="button" class="image-add-btn" (click)="eventImageInput.click()">
+              + Add images ({{ eventRemainingImageSlots() }} remaining)
+            </button>
+            <small class="field-hint">{{ imageUploadHint }}</small>
+            <small class="field-error" *ngIf="eventImageError()">{{ eventImageError() }}</small>
+          </div>
+          <!-- Description with counter -->
+          <div class="field field--wide">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+              <span>Description <span class="optional-tag">Optional</span></span>
+              <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+                [style.color]="eventForm.description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                {{ eventForm.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+              </span>
+            </div>
+            <textarea
+              [ngModel]="eventForm.description"
+              (ngModelChange)="onEventDescriptionChange($event)"
+              [maxlength]="DESCRIPTION_MAX_LENGTH"
+              rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-actions">
+          <button type="button" class="primary-btn" (click)="submitEvent()" [disabled]="!eventFormDirty()">{{ editingEventId() ? 'Save event' : 'Create event' }}</button>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+
+<div class="image-lightbox" *ngIf="lightboxImage()" (click)="closeImageLightbox()">
+  <button type="button" class="image-lightbox-close" (click)="closeImageLightbox()" aria-label="Close image">&times;</button>
+  <img [src]="lightboxImage()!" alt="Expanded preview" (click)="$event.stopPropagation()" />
+</div>

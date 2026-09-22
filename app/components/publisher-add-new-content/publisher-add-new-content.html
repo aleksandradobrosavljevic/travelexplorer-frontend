@@ -1,0 +1,363 @@
+<app-publisher-header></app-publisher-header>
+
+<div class="publisher-page">
+  <main class="content-wrapper">
+
+    <div class="page-header">
+      <div>
+        <h1>{{ (isEditMode() ? 'publisher.addContent.editTitle' : 'publisher.addContent.addTitle') | translate }}</h1>
+        <p>
+          {{ (isEditMode() ? 'publisher.addContent.editSubtitle' : 'publisher.addContent.addSubtitle') | translate: { type: contentTypeLabel() } }}
+        </p>
+      </div>
+      <button class="back-btn" (click)="goBack()">&larr; {{ 'common.back' | translate }}</button>
+    </div>
+
+    <div class="form-container" *ngIf="!isLoading(); else loadingState"
+      (input)="checkChanges()" (change)="checkChanges()">
+
+      <div class="form-group">
+        <label for="title">{{ 'publisher.addContent.title' | translate }}</label>
+        <input id="title" type="text" [(ngModel)]="formData().title" name="title" [placeholder]="'publisher.addContent.titlePlaceholder' | translate"
+          [class.input-error]="formErrors()['title']" />
+        <span class="field-error" *ngIf="formErrors()['title']">{{ formErrors()['title'] }}</span>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+          <label for="description">{{ 'publisher.addContent.description' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+            [style.color]="formData().description.length > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+            {{ formData().description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+          </span>
+        </div>
+        <textarea id="description" rows="4"
+          [ngModel]="formData().description"
+          (ngModelChange)="onDescriptionChange($event)"
+          [maxlength]="DESCRIPTION_MAX_LENGTH"
+          name="description"
+          [placeholder]="'publisher.addContent.descriptionPlaceholder' | translate"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="destinationId">{{ 'publisher.addContent.destination' | translate }}</label>
+        <p-select inputId="destinationId"
+          [options]="destinationOptions()"
+          [ngModel]="formData().destinationId"
+          (ngModelChange)="onDestinationSelected($event)"
+          name="destinationId"
+          optionLabel="name"
+          optionValue="id"
+          [placeholder]="'publisher.addContent.selectDestination' | translate"
+          [showClear]="true"
+          [styleClass]="formErrors()['destinationId'] ? 'form-field-select input-error' : 'form-field-select'">
+        </p-select>
+        <span class="field-error" *ngIf="formErrors()['destinationId']">{{ formErrors()['destinationId'] }}</span>
+      </div>
+
+      <div class="form-group" *ngIf="contentType() === 'Object'">
+        <label for="objectTypeId">{{ 'publisher.addContent.objectType' | translate }}</label>
+        <p-select inputId="objectTypeId"
+          [options]="objectTypeOptions()"
+          [(ngModel)]="formData().objectTypeId"
+          name="objectTypeId"
+          optionLabel="name"
+          optionValue="id"
+          [placeholder]="'publisher.addContent.selectObjectType' | translate"
+          [styleClass]="formErrors()['objectTypeId'] ? 'form-field-select input-error' : 'form-field-select'">
+        </p-select>
+        <span class="field-error" *ngIf="formErrors()['objectTypeId']">{{ formErrors()['objectTypeId'] }}</span>
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'publisher.addContent.search' | translate }}</label>
+
+        <div class="map-search-wrapper">
+          <div class="map-search-box" [class.is-disabled]="!isDestinationSelected()"
+            (click)="!isDestinationSelected() && notifyDestinationRequired($event)">
+            <svg class="map-search-icon" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="6.5" stroke="#9ca3af" stroke-width="1.8"/>
+              <path d="M16 16l4 4" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="text" class="map-search-input"
+              [placeholder]="isDestinationSelected() ? ('publisher.addContent.searchPlaceholder' | translate) : ('publisher.addContent.selectDestinationFirst' | translate)"
+              [ngModel]="mapSearchQuery()"
+              (ngModelChange)="onMapSearchInput($event)"
+              [disabled]="!isDestinationSelected()"
+              name="mapSearchQuery" />
+            <span *ngIf="isMapSearching()" class="map-search-spinner">⟳</span>
+            <button *ngIf="mapSearchQuery() && isDestinationSelected()" type="button" class="map-search-clear" (click)="clearMapSearch()">×</button>
+          </div>
+
+          <div class="map-search-results" *ngIf="mapSearchResults().length > 0 && isDestinationSelected()">
+            <button *ngFor="let result of mapSearchResults()" type="button"
+              class="map-search-result-item" (click)="selectSearchResult(result)">
+              {{ result.display_name }}
+            </button>
+          </div>
+        </div>
+
+        <div class="map-coords-row">
+          <button *ngIf="formData().latitude !== null && formData().longitude !== null"
+            type="button" class="clear-pin-btn" (click)="clearMapPin()">{{ 'publisher.addContent.clearPin' | translate }}</button>
+        </div>
+
+        <div class="map-container-wrapper" [class.is-disabled]="!isDestinationSelected()">
+          <div class="map-container" id="locationMap" [class.map-error]="formErrors()['locationMap']"></div>
+          <div *ngIf="!isDestinationSelected()" class="map-disabled-overlay"
+            (click)="notifyDestinationRequired($event)"
+            (mousedown)="notifyDestinationRequired($event)"
+            (touchstart)="notifyDestinationRequired($event)"
+            (wheel)="notifyDestinationRequired($event)">
+            <span class="map-disabled-hint">{{ 'publisher.addContent.mapDisabled' | translate }}</span>
+          </div>
+        </div>
+        <p class="map-hint">{{ 'publisher.addContent.mapHint' | translate }}</p>
+        <span class="field-error" *ngIf="formErrors()['locationMap']">{{ formErrors()['locationMap'] }}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="objectImages">{{ 'publisher.addContent.images' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+        <input
+          #fileInput
+          id="objectImages"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          (change)="onImageSelected($event)"
+          hidden
+        />
+        <div class="image-strip"
+          (pointerdown)="startImageStripDrag($event)"
+          (pointermove)="dragImageStrip($event)"
+          (pointerup)="endImageStripDrag($event)"
+          (pointercancel)="endImageStripDrag($event)"
+          (pointerleave)="endImageStripDrag($event)">
+          <div
+            class="image-thumb"
+            *ngFor="let previewUrl of imagePreviewUrls(); let index = index"
+            [attr.data-preview-url]="previewUrl"
+            role="button"
+            tabindex="0"
+            (click)="openImageLightbox(previewUrl, $event)"
+            (keydown.enter)="openImageLightbox(previewUrl, $event)"
+            (keydown.space)="$event.preventDefault(); openImageLightbox(previewUrl, $event)">
+            <img [src]="previewUrl" [alt]="'Preview ' + (index + 1)" />
+            <button
+              type="button"
+              class="image-remove-btn"
+              (pointerdown)="$event.stopPropagation()"
+              (click)="$event.stopPropagation(); removeImage(index)"
+              aria-label="Remove image">x</button>
+          </div>
+          <button
+            type="button"
+            class="image-add-card"
+            *ngIf="remainingImageSlots() > 0"
+            (pointerdown)="$event.stopPropagation()"
+            (click)="$event.stopPropagation(); fileInput.click()"
+            [attr.aria-label]="'publisher.addContent.addImagesAria' | translate: { count: remainingImageSlots() }">
+            +{{ remainingImageSlots() }}
+          </button>
+        </div>
+        <span class="field-hint">{{ 'publisher.addContent.imageHint' | translate: { limit: maxImageFileSizeMb } }}</span>
+        <span class="field-error" *ngIf="imageError()">{{ imageError() }}</span>
+        <span class="image-count">{{ imagePreviewUrls().length }}/{{ maxImageCount }}</span>
+      </div>
+
+      <div class="form-group" *ngIf="contentType() === 'Activity'">
+        <label for="activityTypeId">{{ 'publisher.addContent.activityType' | translate }}</label>
+        <p-select inputId="activityTypeId"
+          [options]="activityTypeOptions()"
+          [(ngModel)]="formData().activityTypeId"
+          name="activityTypeId"
+          optionLabel="name"
+          optionValue="id"
+          [placeholder]="'publisher.addContent.selectActivityType' | translate"
+          [styleClass]="formErrors()['activityTypeId'] ? 'form-field-select input-error' : 'form-field-select'">
+        </p-select>
+        <span class="field-error" *ngIf="formErrors()['activityTypeId']">{{ formErrors()['activityTypeId'] }}</span>
+      </div>
+
+      <div class="form-group" *ngIf="contentType() === 'Activity'">
+        <label for="durationMinutes">{{ 'publisher.addContent.durationMinutes' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+        <input id="durationMinutes" type="number"
+          [(ngModel)]="formData().durationMinutes"
+          name="durationMinutes"
+          [placeholder]="'publisher.addContent.durationPlaceholder' | translate"
+          min="0" />
+      </div>
+
+      <div class="form-group" *ngIf="contentType() === 'Activity'">
+        <label for="relatedActivityObject">{{ 'publisher.addContent.relatedObjectOptional' | translate }}</label>
+        <p-select inputId="relatedActivityObject"
+          [options]="objectOptions()"
+          [(ngModel)]="formData().objectId"
+          (ngModelChange)="onObjectSelected($event)"
+          name="relatedActivityObject"
+          optionLabel="name"
+          optionValue="id"
+          [placeholder]="'publisher.addContent.noRelatedObject' | translate"
+          [showClear]="true"
+          styleClass="form-field-select">
+        </p-select>
+      </div>
+
+      <div *ngIf="contentType() === 'Event'" class="dynamic-section">
+
+        <div class="form-group">
+          <label for="eventTypeId">{{ 'publisher.addContent.eventType' | translate }}</label>
+          <p-select inputId="eventTypeId"
+            [options]="eventTypeOptions()"
+            [(ngModel)]="formData().eventTypeId"
+            name="eventTypeId"
+            optionLabel="name"
+            optionValue="id"
+            [placeholder]="'publisher.addContent.selectEventType' | translate"
+            [styleClass]="formErrors()['eventTypeId'] ? 'form-field-select input-error' : 'form-field-select'">
+          </p-select>
+          <span class="field-error" *ngIf="formErrors()['eventTypeId']">{{ formErrors()['eventTypeId'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="relatedEventObject">{{ 'publisher.addContent.relatedObject' | translate }}</label>
+          <p-select inputId="relatedEventObject"
+            [options]="objectOptions()"
+            [(ngModel)]="formData().objectId"
+            (ngModelChange)="onObjectSelected($event)"
+            name="relatedEventObject"
+            optionLabel="name"
+            optionValue="id"
+            [placeholder]="'publisher.addContent.selectObject' | translate"
+            [showClear]="true"
+            [styleClass]="formErrors()['objectId'] ? 'form-field-select input-error' : 'form-field-select'">
+          </p-select>
+          <span class="field-error" *ngIf="formErrors()['objectId']">{{ formErrors()['objectId'] }}</span>
+        </div>
+
+        <!-- START DATE & TIME — p-datepicker sa showTime -->
+        <div class="form-group">
+          <label for="startDateTime">{{ 'publisher.addContent.startDateTime' | translate }}</label>
+          <p-datepicker
+            inputId="startDateTime"
+            [ngModel]="startDateValue()"
+            (ngModelChange)="onStartDateChange($event)"
+            name="startDateTime"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            dateFormat="dd.mm.yy"
+            [minDate]="minStartDate"
+            [showIcon]="true"
+            appendTo="body"
+            styleClass="publisher-datepicker"
+            [class.input-error]="formErrors()['startDateTime']">
+          </p-datepicker>
+          <span class="field-error" *ngIf="formErrors()['startDateTime']">{{ formErrors()['startDateTime'] }}</span>
+        </div>
+
+        <!-- END DATE & TIME — p-datepicker sa showTime -->
+        <div class="form-group">
+          <label for="endDateTime">{{ 'publisher.addContent.endDateTimeOptional' | translate }}</label>
+          <p-datepicker
+            inputId="endDateTime"
+            [ngModel]="endDateValue()"
+            (ngModelChange)="onEndDateChange($event)"
+            name="endDateTime"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            dateFormat="dd.mm.yy"
+            [minDate]="minStartDate"
+            [showIcon]="true"
+            appendTo="body"
+            styleClass="publisher-datepicker"
+            [class.input-error]="formErrors()['endDateTime']">
+          </p-datepicker>
+          <span class="field-error" *ngIf="formErrors()['endDateTime']">{{ formErrors()['endDateTime'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="capacity">{{ 'publisher.addContent.capacity' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+          <input id="capacity" type="number" [(ngModel)]="formData().capacity" name="capacity" [placeholder]="'publisher.addContent.capacityPlaceholder' | translate" min="0"
+            [class.input-error]="formErrors()['capacity']" />
+          <span class="field-error" *ngIf="formErrors()['capacity']">{{ formErrors()['capacity'] }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="contentType() === 'Object' || contentType() === 'Activity'" class="dynamic-section">
+        <div class="form-group">
+          <label for="airbnbLink">{{ 'publisher.addContent.airbnbLink' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+          <input id="airbnbLink" type="url" inputmode="url" [(ngModel)]="formData().airbnbLink" name="airbnbLink" [placeholder]="'publisher.addContent.airbnbPlaceholder' | translate" [class.input-error]="formErrors()['airbnbLink']" />
+          <span class="field-error" *ngIf="formErrors()['airbnbLink']">{{ formErrors()['airbnbLink'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="bookingLink">{{ 'publisher.addContent.bookingLink' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+          <input id="bookingLink" type="url" inputmode="url" [(ngModel)]="formData().bookingLink" name="bookingLink" [placeholder]="'publisher.addContent.bookingPlaceholder' | translate" [class.input-error]="formErrors()['bookingLink']" />
+          <span class="field-error" *ngIf="formErrors()['bookingLink']">{{ formErrors()['bookingLink'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">{{ 'publisher.addContent.phone' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+          <input
+            id="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel"
+            [ngModel]="formData().phone"
+            name="phone"
+            [placeholder]="phonePlaceholder"
+            [class.input-error]="formErrors()['phone']"
+            (ngModelChange)="onPhoneChange($event)" />
+          <span class="field-hint">{{ 'publisher.addContent.phoneHint' | translate: { example: phonePlaceholder } }}</span>
+          <span class="field-error" *ngIf="formErrors()['phone']">{{ formErrors()['phone'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="website">{{ 'publisher.addContent.website' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+          <input id="website" type="url" inputmode="url" [(ngModel)]="formData().website" name="website" [placeholder]="'publisher.addContent.websitePlaceholder' | translate" [class.input-error]="formErrors()['website']" />
+          <span class="field-error" *ngIf="formErrors()['website']">{{ formErrors()['website'] }}</span>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="contentType() !== 'Object'">
+        <label>{{ 'publisher.addContent.price' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+        <div class="price-row">
+          <div class="price-suffix-wrapper">
+            <input id="price" type="number" [(ngModel)]="formData().price" name="price" [placeholder]="'publisher.addContent.pricePlaceholder' | translate"
+              [class.input-error]="formErrors()['price']" />
+            <span class="price-suffix" *ngIf="formData().price">{{ formData().currency }}</span>
+          </div>
+          <p-select
+            [options]="currencyOptions"
+            [(ngModel)]="formData().currency"
+            name="currency"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="form-field-select currency-select">
+          </p-select>
+        </div>
+        <span class="field-error" *ngIf="formErrors()['price']">{{ formErrors()['price'] }}</span>
+      </div>
+
+      <div class="button-group">
+        <button class="submit-btn"
+          [disabled]="isSaving() || (isEditMode() && !hasChanges())"
+          (click)="onSubmitForApproval()">
+          {{ isSaving() ? ('common.saving' | translate) : ((isEditMode() ? 'publisher.addContent.saveChanges' : 'publisher.addContent.submitForApproval') | translate) }}
+        </button>
+      </div>
+    </div>
+
+    <ng-template #loadingState>
+      <div class="form-container">
+        <p>{{ 'publisher.addContent.loadingFormData' | translate }}</p>
+      </div>
+    </ng-template>
+
+  </main>
+</div>
+
+<div class="image-lightbox" *ngIf="lightboxImage()" (click)="closeImageLightbox()">
+  <button type="button" class="image-lightbox-close" (click)="closeImageLightbox()" aria-label="Close image">&times;</button>
+  <img [src]="lightboxImage()!" alt="Expanded preview" (click)="$event.stopPropagation()" />
+</div>

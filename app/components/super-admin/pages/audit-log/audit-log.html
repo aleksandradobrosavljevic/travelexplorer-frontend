@@ -1,0 +1,262 @@
+<section class="audit-log-page">
+  <div class="page-header">
+    <div>
+      <h1>Audit Log</h1>
+      <p>Track administrative actions and system activity across the platform.</p>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-label">Logged Actions</span>
+      <strong>{{ filteredLogs().length }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Publisher Actions</span>
+      <strong>{{ publisherActionCount() }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Account Changes</span>
+      <strong>{{ accountChangeCount() }}</strong>
+    </div>
+  </div>
+
+  <div class="audit-card">
+    <div class="card-header">
+      <div>
+        <h2>Activity Timeline</h2>
+        <p class="card-subtitle">Search, filter and inspect recent administrative activity.</p>
+      </div>
+      <span class="logs-count">{{ filteredLogs().length }} results</span>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group search-group">
+        <label for="auditSearch">Search</label>
+        <input
+          id="auditSearch"
+          type="text"
+          placeholder="Search by admin, user, email, action or details"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>Action</label>
+        <p-select
+          [options]="actionOptions"
+          [(ngModel)]="selectedAction"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onActionChange()"
+          appendTo="body"
+          styleClass="audit-filter-select">
+        </p-select>
+      </div>
+
+      <div class="filter-group">
+        <label>User Type</label>
+        <p-select
+          [options]="targetRoleOptions"
+          [(ngModel)]="selectedTargetRole"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onTargetRoleChange()"
+          appendTo="body"
+          styleClass="audit-filter-select">
+        </p-select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <p-select
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onStatusChange()"
+          appendTo="body"
+          styleClass="audit-filter-select">
+        </p-select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="secondary-btn" (click)="clearAllFilters()">Clear All Filters</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Admin</th>
+            <th>Action</th>
+            <th>Target User</th>
+            <th>User Type</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th class="actions-column">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of pagedLogs()">
+            <td>{{ formatTimestamp(log.timestamp) }}</td>
+            <td>
+              <div class="user-stack">
+                <strong>{{ log.adminName }}</strong>
+                <small>{{ log.adminEmail || log.adminRole }}</small>
+              </div>
+            </td>
+            <td style="text-align: center;">
+              <span class="action-badge" [ngClass]="getActionClass(log.action)">
+                {{ log.actionLabel }}
+              </span>
+            </td>
+            <td>{{ log.targetName }}</td>
+            <td><span class="role-badge">{{ log.targetRole }}</span></td>
+            <td>{{ log.targetEmail }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(log.status)">
+                {{ log.status }}
+              </span>
+            </td>
+            <td class="actions-column">
+              <button class="details-btn" (click)="openDetails(log)">View Details</button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredLogs().length === 0">
+            <td colspan="7" class="empty-state">
+              No audit log entries found for the selected filters.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p-paginator
+      [rows]="pageSize()"
+      [totalRecords]="totalRecords()"
+      [rowsPerPageOptions]="[5, 10, 20]"
+      (onPageChange)="onPageChange($event)"
+      appendTo="body"
+      styleClass="audit-paginator">
+    </p-paginator>
+  </div>
+
+  <div class="details-overlay" *ngIf="isDetailsOpen()" (click)="closeDetails()"></div>
+
+  <aside class="details-panel" [class.open]="isDetailsOpen()">
+    <div class="details-header" *ngIf="selectedLog()">
+      <div>
+        <h2>Log Details</h2>
+        <p>Detailed view of the selected audit log entry.</p>
+      </div>
+      <button class="close-btn" (click)="closeDetails()">×</button>
+    </div>
+
+    <ng-container *ngIf="selectedLog()">
+
+      <!-- Status banner -->
+      <div class="details-status-banner"
+        [ngClass]="selectedLog()!.status === 'Success' ? 'banner-success' : 'banner-failed'">
+        <div class="banner-icon">
+          <span *ngIf="selectedLog()!.status === 'Success'">✓</span>
+          <span *ngIf="selectedLog()!.status !== 'Success'">✕</span>
+        </div>
+        <div class="banner-text">
+          <span class="banner-status">{{ selectedLog()!.status }}</span>
+          <span class="banner-hint" *ngIf="selectedLog()!.status === 'Success'">Action executed successfully</span>
+          <span class="banner-hint" *ngIf="selectedLog()!.status !== 'Success'">Action failed to execute</span>
+        </div>
+      </div>
+
+      <!-- Timestamp -->
+      <div class="timestamp-chip">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        {{ formatTimestamp(selectedLog()!.timestamp) }}
+      </div>
+
+      <div class="details-content">
+
+        <!-- Action -->
+        <div class="detail-group">
+          <span class="detail-group-label">Action</span>
+          <div>
+            <span class="action-badge" [ngClass]="getActionClass(selectedLog()!.action)">
+              {{ selectedLog()!.actionLabel }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Administrator -->
+        <div class="detail-group">
+          <span class="detail-group-label">Administrator</span>
+          <div class="detail-info-card">
+            <div class="detail-info-row">
+              <span class="detail-key">Name</span>
+              <span class="detail-val">{{ selectedLog()!.adminName }}</span>
+            </div>
+            <div class="detail-info-row">
+              <span class="detail-key">Email</span>
+              <span class="detail-val-sm">{{ selectedLog()!.adminEmail }}</span>
+            </div>
+            <div class="detail-info-row">
+              <span class="detail-key">Role</span>
+              <span class="detail-val-sm">{{ selectedLog()!.adminRole }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target User -->
+        <div class="detail-group">
+          <span class="detail-group-label">Target User</span>
+          <div class="detail-info-card">
+            <div class="detail-info-row">
+              <span class="detail-key">Name</span>
+              <span class="detail-val">{{ selectedLog()!.targetName }}</span>
+            </div>
+            <div class="detail-info-row">
+              <span class="detail-key">Email</span>
+              <span class="detail-val-sm">{{ selectedLog()!.targetEmail }}</span>
+            </div>
+            <div class="detail-info-row">
+              <span class="detail-key">Type</span>
+              <span class="detail-val-sm">{{ selectedLog()!.targetRole }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destination (conditional) -->
+        <div class="detail-group" *ngIf="selectedLog()!.destinationName">
+          <span class="detail-group-label">Destination</span>
+          <div class="detail-info-card">
+            <div class="detail-info-row">
+              <span class="detail-key">Name</span>
+              <span class="detail-val">{{ selectedLog()!.destinationName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="detail-group" *ngIf="selectedLog()!.reason">
+          <span class="detail-group-label">Reason</span>
+          <div class="detail-text-box">{{ selectedLog()!.reason }}</div>
+        </div>
+
+        <!-- Details -->
+        <div class="detail-group">
+          <span class="detail-group-label">Details</span>
+          <div class="detail-text-box">{{ selectedLog()!.details }}</div>
+        </div>
+
+      </div>
+    </ng-container>
+  </aside>
+</section>

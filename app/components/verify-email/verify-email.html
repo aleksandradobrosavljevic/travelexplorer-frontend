@@ -1,0 +1,35 @@
+<div class="login-page">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <h2>{{ title() }}</h2>
+      <p>{{ message() }}</p>
+
+      <div
+        class="status-box"
+        [class.success]="!loading() && success()"
+        [class.error]="!loading() && !success()"
+      >
+        <span *ngIf="loading()">Checking your verification link...</span>
+        <span *ngIf="!loading() && success() && role() !== 'Publisher'">
+          Your account is verified. Redirecting to login...
+        </span>
+        <span *ngIf="!loading() && success() && role() === 'Publisher'">
+          Your request is pending admin approval. You will be notified by email once your request is reviewed.
+        </span>
+      </div>
+
+      <button
+        *ngIf="!loading()"
+        type="button"
+        class="submit-btn"
+        (click)="goToLogin()"
+      >
+        Go to Login
+      </button>
+
+      <p class="terms-text">
+        By continuing, you agree to our Terms of Service and Privacy Policy.
+      </p>
+    </div>
+  </div>
+</div>

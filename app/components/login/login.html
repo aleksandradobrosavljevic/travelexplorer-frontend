@@ -1,0 +1,80 @@
+<div class="login-page">
+  <div class="login-wrapper">
+    <app-header mode="minimal"></app-header>
+
+    <div class="login-card">
+      <h2>{{ 'auth.signIn' | translate }}</h2>
+      <p>{{ 'auth.loginIntro' | translate }}</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <div class="form-group">
+          <label for="email">{{ 'auth.emailAddress' | translate }}</label>
+          <input
+            pInputText
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="name@example.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">{{ 'auth.password' | translate }}</label>
+
+          <div class="password-wrapper">
+            <input
+              pInputText
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              [placeholder]="'auth.passwordPlaceholder' | translate"
+            />
+
+            <button
+              type="button"
+              class="toggle-password-btn"
+              (click)="togglePasswordVisibility()"
+            >
+              <span class="material-icons">
+                {{ showPassword() ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <button pButton type="submit" class="submit-btn" [disabled]="isLoading()">
+          {{ isLoading() ? ('auth.signingIn' | translate) : ('auth.signIn' | translate) }}
+        </button>
+      </form>
+
+      <div *ngIf="canResendVerification()" class="resend-box">
+        <p class="resend-text">{{ 'auth.emailNeedsVerification' | translate }}</p>
+        <button
+          pButton
+          type="button"
+          class="resend-btn"
+          (click)="resendVerificationEmail()"
+          [disabled]="resendLoading()"
+        >
+          {{ resendLoading() ? ('common.sending' | translate) : ('auth.resendVerification' | translate) }}
+        </button>
+      </div>
+
+      <div class="divider">
+        <span>{{ 'common.or' | translate }}</span>
+      </div>
+
+      <button pButton type="button" class="register-btn" (click)="goToRegister()">
+        {{ 'navigation.register' | translate }}
+      </button>
+
+      <button pButton type="button" class="guest-btn" (click)="continueAsGuest()">
+        {{ 'auth.continueAsGuest' | translate }}
+      </button>
+
+      <p class="terms-text">
+        {{ 'auth.termsNotice' | translate }}
+      </p>
+    </div>
+  </div>
+</div>

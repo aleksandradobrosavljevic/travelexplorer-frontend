@@ -1,0 +1,302 @@
+<section class="page-shell">
+
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1>Destination dashboard</h1>
+      <p *ngIf="analytics">{{ analytics.destinationName }}</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="custom-dropdown-group">
+        <span class="custom-dropdown-label">Analytics year</span>
+        <div class="custom-dropdown" [class.open]="isDropdownOpen()" [class.disabled]="isLoading()">
+          <button
+            type="button"
+            class="custom-dropdown-trigger"
+            (click)="!isLoading() && toggleDropdown($event)"
+            [disabled]="isLoading()"
+            aria-haspopup="listbox"
+            [attr.aria-expanded]="isDropdownOpen()"
+          >
+            <span>{{ selectedYearLabel() }}</span>
+            <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+
+          <ul *ngIf="isDropdownOpen()" class="custom-dropdown-list" role="listbox">
+            <li role="option" class="custom-dropdown-item"
+                [class.selected]="selectedYear() === 'all'"
+                (click)="selectYear('all', $event)">
+              All years
+            </li>
+            <li *ngFor="let year of availableYears"
+                role="option"
+                class="custom-dropdown-item"
+                [class.selected]="selectedYear() === year.toString()"
+                (click)="selectYear(year.toString(), $event)">
+              {{ year }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage()" class="state-card error">{{ errorMessage() }}</div>
+
+  <ng-container *ngIf="analytics as data; else emptyDashboard">
+    <div *ngIf="!data.hasDataForSelectedYear" class="state-card warning">
+      No analytics were found for {{ data.selectedYear }}.
+    </div>
+    <div class="state-card muted" *ngIf="isLoading()">
+      Refreshing dashboard data...
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-row">
+      <div class="stat-card" *ngFor="let card of data.summaryCards; trackBy: trackByLabel"
+           [ngClass]="card.tone || 'default'">
+        <span class="stat-label">{{ card.label }}</span>
+        <strong>{{ card.value }}</strong>
+        <span class="stat-hint">{{ card.hint }}</span>
+      </div>
+    </div>
+
+    <!-- Content moderation + Content by type -->
+    <div class="content-grid two-up">
+      <section class="table-card">
+        <div class="card-header compact-header">
+          <div>
+            <h2>Content moderation</h2>
+            <p class="card-subtitle">Status totals for objects, activities and events in {{ data.destinationName }}.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Status</th><th>Count</th><th>Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of data.contentStatusRows; trackBy: trackByLabel">
+                <td><span class="table-badge" [ngClass]="item.tone || 'default'">{{ item.label }}</span></td>
+                <td class="number-cell">{{ item.value }}</td>
+                <td class="muted-text">{{ item.hint }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="card-header compact-header">
+          <div>
+            <h2>Content by type</h2>
+            <p class="card-subtitle">How much destination content exists in each category.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Type</th><th>Total</th><th>Breakdown</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of data.contentTypeRows; trackBy: trackByLabel">
+                <td>{{ item.label }}</td>
+                <td class="number-cell">{{ item.value }}</td>
+                <td class="muted-text">{{ item.hint }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Publisher funnel + Review summary -->
+    <div class="content-grid two-up">
+      <section class="table-card">
+        <div class="card-header compact-header">
+          <div>
+            <h2>Publisher request funnel</h2>
+            <p class="card-subtitle">Request workload and average approval speed.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Metric</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of data.approvalRows; trackBy: trackByLabel">
+                <td><span class="table-badge" [ngClass]="item.tone || 'default'">{{ item.label }}</span></td>
+                <td class="number-cell">{{ item.value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="card-header compact-header">
+          <div>
+            <h2>Review summary</h2>
+            <p class="card-subtitle">Rating volume and quality for the destination.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Metric</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of data.reviewRows; trackBy: trackByLabel">
+                <td>{{ item.label }}</td>
+                <td class="number-cell">{{ item.value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Most saved -->
+    <section class="table-card">
+      <div class="card-header compact-header">
+        <div>
+          <h2>Most saved destination content</h2>
+          <p class="card-subtitle">Top objects, activities and events saved by tourists.</p>
+        </div>
+        <div class="custom-dropdown top-n-dropdown" [class.open]="isTopSavedDropdownOpen()">
+          <button
+            type="button"
+            class="custom-dropdown-trigger"
+            (click)="toggleTopSavedDropdown($event)"
+            aria-haspopup="listbox"
+            [attr.aria-expanded]="isTopSavedDropdownOpen()"
+          >
+            <span>Top {{ topSavedFilter() }}</span>
+            <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+
+          <ul *ngIf="isTopSavedDropdownOpen()" class="custom-dropdown-list" role="listbox">
+            <li *ngFor="let option of topNOptions"
+                role="option"
+                class="custom-dropdown-item"
+                [class.selected]="topSavedFilter() === option"
+                (click)="selectTopSaved(option, $event)">
+              Top {{ option }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Type</th><th>Saves</th><th>Relative</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredTopSaved(); let i = index; trackBy: trackByLabel">
+              <td class="muted-text">{{ i + 1 }}</td>
+              <td>{{ item.label }}</td>
+              <td><span class="table-badge default">{{ item.type || 'Item' }}</span></td>
+              <td class="number-cell">{{ item.value }}</td>
+              <td>
+                <div class="progress-cell">
+                  <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="relativeWidth(item.value, topSavedMax())"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredTopSaved().length">
+              <td colspan="5" class="empty-row">No saved items found for this filter.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Publisher stats + Admin activity -->
+    <div class="content-grid two-up">
+      <section class="table-card">
+        <div class="card-header compact-header">
+          <div>
+            <h2>Publisher stats</h2>
+            <p class="card-subtitle">Publisher content and pending request pressure.</p>
+          </div>
+          <div class="custom-dropdown top-n-dropdown" [class.open]="isPublisherDropdownOpen()">
+            <button
+              type="button"
+              class="custom-dropdown-trigger"
+              (click)="togglePublisherDropdown($event)"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isPublisherDropdownOpen()"
+            >
+              <span>Top {{ publisherFilter() }}</span>
+              <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+
+            <ul *ngIf="isPublisherDropdownOpen()" class="custom-dropdown-list" role="listbox">
+              <li *ngFor="let option of topNOptions"
+                  role="option"
+                  class="custom-dropdown-item"
+                  [class.selected]="publisherFilter() === option"
+                  (click)="selectPublisher(option, $event)">
+                Top {{ option }}
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Publisher</th><th>Total content</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of filteredPublisherRows(); trackBy: trackByLabel">
+                <td>{{ item.label }}</td>
+                <td class="number-cell">{{ item.value }}</td>
+                <td class="muted-text">{{ item.hint }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="card-header compact-header">
+          <div>
+            <h2>Admin activity</h2>
+            <p class="card-subtitle">Actions performed for this destination.</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Action</th><th>Count</th><th>Destination</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of data.adminActionRows; trackBy: trackByLabel">
+                <td>{{ item.label }}</td>
+                <td class="number-cell">{{ item.value }}</td>
+                <td class="muted-text">{{ item.hint }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </ng-container>
+
+  <ng-template #emptyDashboard>
+    <div class="state-card warning">
+      Dashboard data was not preloaded. Use Refresh after logging in as destination admin.
+    </div>
+  </ng-template>
+
+</section>

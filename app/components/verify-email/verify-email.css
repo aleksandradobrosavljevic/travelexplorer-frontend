@@ -1,0 +1,153 @@
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 42px 20px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.login-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(16, 34, 54, 0.58), rgba(19, 74, 82, 0.62)),
+    url('/images/auth-collage.jpg') center center / cover no-repeat;
+  filter: saturate(0.9) contrast(0.94) brightness(0.82);
+  transform: scale(1.04);
+  z-index: -2;
+}
+
+.login-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(42, 157, 143, 0.14), transparent 32%);
+  z-index: -1;
+}
+
+.login-wrapper {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.login-card {
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  padding: 30px 34px 34px;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-card h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  color: #17324f;
+  letter-spacing: -0.4px;
+}
+
+.login-card p {
+  margin: 0 0 24px 0;
+  text-align: center;
+  color: #566b84;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.status-box {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid rgba(183, 193, 206, 0.85);
+  background: rgba(255, 255, 255, 0.84);
+  color: #374151;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-sizing: border-box;
+}
+
+.status-box.success {
+  background: rgba(236, 253, 245, 0.85);
+  border-color: rgba(167, 243, 208, 0.9);
+  color: #065f46;
+}
+
+.status-box.error {
+  background: rgba(254, 242, 242, 0.88);
+  border-color: rgba(254, 202, 202, 0.95);
+  color: #991b1b;
+}
+
+.submit-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #35b8a7, #239485) !important;
+  color: #ffffff !important;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+  box-shadow: 0 14px 28px rgba(42, 157, 143, 0.24);
+}
+
+.submit-btn:hover,
+.submit-btn:focus,
+.submit-btn:active {
+  background: linear-gradient(135deg, #35b8a7, #239485) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+  box-shadow: 0 18px 32px rgba(42, 157, 143, 0.28);
+}
+
+.terms-text {
+  margin-top: 18px !important;
+  font-size: 12px !important;
+  line-height: 1.6;
+  color: #75869b !important;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .login-page {
+    padding: 20px 14px;
+  }
+
+  .login-wrapper {
+    max-width: 100%;
+    border-radius: 24px;
+  }
+
+  .login-card {
+    padding: 20px 22px 26px;
+  }
+
+  .login-card h2 {
+    font-size: 22px;
+  }
+}

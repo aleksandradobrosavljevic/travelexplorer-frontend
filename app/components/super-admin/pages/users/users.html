@@ -1,0 +1,142 @@
+<section class="users-page">
+  <div class="page-header">
+    <h1>Users</h1>
+    <p>Manage all registered users across the platform.</p>
+  </div>
+
+  <div class="users-card">
+    <div class="card-header">
+      <div>
+        <h2>User Management</h2>
+        <p class="card-subtitle">View, filter and manage platform users.</p>
+      </div>
+      <span class="users-count">{{ totalRecords() }} users</span>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group search-group">
+        <label for="searchFilter">Search</label>
+        <input
+          id="searchFilter"
+          type="text"
+          placeholder="Search by name, email or role"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+      <div class="filter-group">
+        <label>Role</label>
+        <p-select
+          [options]="roleOptions"
+          [(ngModel)]="selectedRole"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onRoleChange()"
+          appendTo="body"
+          styleClass="users-filter-select">
+        </p-select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <p-select
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onStatusChange()"
+          appendTo="body"
+          styleClass="users-filter-select">
+        </p-select>
+      </div>
+      <div class="filter-actions">
+        <button class="clear-filters-btn" (click)="clearAllFilters()">Clear All Filters</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Display Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers()">
+            <td>{{ getDisplayName(user) }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ getRoleLabel(user.role) }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(user)">
+                {{ getUserStatusLabel(user) }}
+              </span>
+            </td>
+            <td class="actions-column">
+              <button
+                *ngIf="canToggleStatus(user)"
+                class="action-btn"
+                [ngClass]="user.isActive ? 'block-btn' : 'unblock-btn'"
+                (click)="openStatusModal(user)">
+                {{ user.isActive ? 'Block' : 'Unblock' }}
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredUsers().length === 0">
+            <td colspan="5" class="empty-state">No users found for the selected filters.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p-paginator
+      [rows]="pageSize()"
+      [totalRecords]="totalRecords()"
+      [rowsPerPageOptions]="[5, 10, 20]"
+      (onPageChange)="onPageChange($event)"
+      appendTo="body"
+      styleClass="users-paginator">
+    </p-paginator>
+
+  </div>
+
+  <div class="modal-overlay" *ngIf="isStatusModalOpen()" (click)="closeStatusModal()"></div>
+
+  <div class="confirm-modal" *ngIf="isStatusModalOpen()">
+    <div class="modal-header">
+      <div>
+        <h2>{{ selectedUser()?.isActive ? 'Block User' : 'Unblock User' }}</h2>
+        <p>
+          {{ selectedUser()?.isActive
+            ? 'Enter the reason for blocking this user.'
+            : 'Enter the reason for unblocking this user.' }}
+        </p>
+      </div>
+      <button class="modal-close-btn" (click)="closeStatusModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-target">
+        {{ selectedUser() ? getDisplayName(selectedUser()!) : '' }}
+      </p>
+      <label for="statusReason">Reason</label>
+      <textarea id="statusReason" rows="4" [(ngModel)]="statusReason" placeholder="Enter reason"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" (click)="closeStatusModal()">Cancel</button>
+      <button
+        [disabled]="isDisabled()"
+        class="modal-confirm-btn"
+        [ngClass]="selectedUser()?.isActive ? 'danger-confirm' : 'success-confirm'"
+        (click)="confirmUserStatusChange()">
+        {{ selectedUser()?.isActive ? 'Block User' : 'Unblock User' }}
+      </button>
+    </div>
+  </div>
+
+</section>

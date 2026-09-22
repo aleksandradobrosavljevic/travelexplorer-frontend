@@ -1,0 +1,150 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div>
+      <h1>Reported reviews</h1>
+    </div>
+  </div>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2>Filters</h2>
+      </div>
+      <button type="button" class="ghost-btn" (click)="resetFilters()">Reset filters</button>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group search-group">
+        <label for="reviewSearch">Search</label>
+        <input
+          id="reviewSearch"
+          type="text"
+          placeholder="Tourist, element or comment"
+          [(ngModel)]="searchTerm"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="ratingFilter">Rating</label>
+        <p-select
+          id="ratingFilter"
+          [options]="ratingOptions"
+          [(ngModel)]="ratingFilter"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="custom-prime-select"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="sortFilter">Sort</label>
+        <p-select
+          id="sortFilter"
+          [options]="sortOptions"
+          [(ngModel)]="sortFilter"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="custom-prime-select"
+        />
+      </div>
+
+      <div class="filter-group content-type-group">
+        <span class="filter-label">Content type</span>
+        <label class="check-filter" *ngFor="let option of targetTypeOptions" [class.enabled]="targetTypeEnabled(option.value)">
+          <input
+            type="checkbox"
+            [ngModel]="targetTypeEnabled(option.value)"
+            (ngModelChange)="setTargetTypeEnabled(option.value, $event)"
+          />
+          <span>{{ option.label }}</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2>Moderation table</h2>
+        <p class="card-subtitle">Ignore clears the alert. Hide requires a reason and notifies the tourist.</p>
+      </div>
+      <span class="count-pill">{{ resultCount }} / {{ totalCount }} results</span>
+    </div>
+
+    <div *ngIf="isLoading && !totalCount" class="state-card">
+      Loading reviews...
+    </div>
+
+    <div class="table-wrapper" *ngIf="!isLoading || totalCount">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Tourist</th>
+            <th>Target</th>
+            <th>Rating</th>
+            <th>Reports</th>
+            <th>Comment</th>
+            <th>Created</th>
+            <th>Moderation reason</th>
+            <th class="actions-cell">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let item of paginatedReviews; trackBy: trackByReviewId">
+            <td>
+              <strong>{{ item.touristFirstName }} {{ item.touristLastName }}</strong>
+              <div class="muted-text">Review #{{ item.id }}</div>
+            </td>
+            <td>
+              <strong>{{ item.targetName }}</strong>
+              <div class="muted-text">{{ item.targetType }}</div>
+            </td>
+            <td>{{ buildStars(item.rating) }}</td>
+            <td>
+              <span class="status-badge report-count">{{ item.reportCount }} reports</span>
+            </td>
+            <td class="description-cell">{{ item.comment || 'No comment provided.' }}</td>
+            <td>{{ item.createdAt | date:'short' }}</td>
+            <td class="reason-cell">
+              <textarea
+                class="textarea-control"
+                [ngModel]="moderationReason(item.id)"
+                (ngModelChange)="setModerationReason(item.id, $event)"
+                rows="3"
+                placeholder="Required reason before hiding..."
+              ></textarea>
+              <div *ngIf="item.rejectionReason" class="inline-note">
+                Stored: {{ item.rejectionReason }}
+              </div>
+            </td>
+            <td class="actions-cell">
+              <div class="action-row">
+                <button type="button" class="secondary-btn" (click)="ignoreReports(item)" [disabled]="isReviewBusy(item.id)">
+                  {{ isReviewBusy(item.id) ? 'Saving...' : 'Ignore' }}
+                </button>
+                <button type="button" class="primary-btn" (click)="toggleVisibility(item)" [disabled]="isReviewBusy(item.id)">
+                  {{ isReviewBusy(item.id) ? 'Saving...' : 'Hide' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!filteredReviews.length">
+            <td colspan="8" class="empty-row">No reported reviews matched the selected filters.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p-paginator
+      *ngIf="resultCount > 0"
+      [rows]="pageSize()"
+      [totalRecords]="resultCount"
+      [first]="first()"
+      [rowsPerPageOptions]="pageSizeOptions"
+      (onPageChange)="onPageChange($event)"
+      styleClass="reviews-paginator">
+    </p-paginator>
+  </section>
+</section>

@@ -1,0 +1,139 @@
+<div class="sa-map-page">
+
+  <div id="super-admin-map"></div>
+
+  <!-- Controls panel (left) -->
+  <div class="map-controls">
+
+    <!-- Search -->
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" class="search-icon" fill="none">
+        <circle cx="11" cy="11" r="6.5" stroke="#6b7280" stroke-width="2"/>
+        <path d="M16 16l4 4" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Search any location..."
+        (input)="onSearchChange($event)"
+        class="search-input"
+      />
+      <span *ngIf="isSearching()" class="search-spinner">⟳</span>
+      <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()">×</button>
+    </div>
+
+    <!-- Filter toggle button -->
+    <button class="filter-toggle-btn" (click)="toggleFilters()">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+        <path d="M3 6h18M7 12h10M11 18h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Filters
+    </button>
+
+    <!-- Filter panel -->
+    <div class="filter-panel" *ngIf="showFilters()">
+      <p class="filter-panel-title">Content types</p>
+      <div class="filter-options">
+        <button class="filter-chip" [class.active-object]="showObjects()" (click)="toggleObjects()">
+          <span class="chip-dot" style="background:#2a9d8f"></span>
+          Objects
+        </button>
+        <button class="filter-chip" [class.active-event]="showEvents()" (click)="toggleEvents()">
+          <span class="chip-dot" style="background:#1d3557"></span>
+          Events
+        </button>
+        <button class="filter-chip" [class.active-activity]="showActivities()" (click)="toggleActivities()">
+          <span class="chip-dot" style="background:#7c3aed"></span>
+          Activities
+        </button>
+      </div>
+      <p class="filter-hint">Zoom in to see destination content</p>
+
+      <div class="filter-divider"></div>
+
+      <p class="filter-panel-title">Destination types</p>
+      <div class="filter-options">
+        <button
+          *ngFor="let type of destinationTypes()"
+          class="filter-chip filter-chip-type"
+          [class.active-type]="isTypeSelected(type.id) && selectedTypeIds().size > 0"
+          (click)="toggleTypeFilter(type.id)">
+          <span class="chip-dot" style="background:#239485"></span>
+          {{ type.name }}
+        </button>
+        <button
+          *ngIf="selectedTypeIds().size > 0"
+          class="filter-chip-clear"
+          (click)="clearTypeFilter()">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Back button -->
+    <button *ngIf="showBackButton()" class="back-btn" (click)="goBack()">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+        <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Destinations
+    </button>
+
+  </div>
+
+  <!-- Search results dropdown -->
+  <div class="search-results-fixed"
+       *ngIf="searchResults().length > 0"
+       [style.top.px]="searchDropdownTop()"
+       [style.left.px]="searchDropdownLeft()"
+       [style.width.px]="searchDropdownWidth()">
+    <button *ngFor="let result of searchResults()" type="button"
+      class="search-result-item" (click)="selectSearchResult(result)">
+      {{ result.display_name }}
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="loading-pill">Loading destinations...</div>
+  </div>
+
+  <div class="loading-markers-pill" *ngIf="isLoadingMarkers()">
+    Loading content...
+  </div>
+
+  <!-- Zoom hint -->
+  <div class="zoom-hint-pill" *ngIf="!isLoading()">
+    Zoom in to explore destinations
+  </div>
+
+  <!-- Details panel (right) — destination -->
+  <div class="details-panel" *ngIf="showDetailsPanel() && selectedDestination()">
+    <button class="details-close" (click)="closeDetails()">×</button>
+    <div class="details-body">
+      <div class="details-type">{{ selectedDestination()!.typeName }}</div>
+      <h3>{{ selectedDestination()!.name }}</h3>
+      <div class="details-meta">
+        <span>{{ selectedDestination()!.country }}</span>
+        <span class="status-badge" [class.active]="selectedDestination()!.isActive" [class.inactive]="!selectedDestination()!.isActive">
+          {{ selectedDestination()!.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+      <div class="details-coords">
+        <small>{{ selectedDestination()!.latitude | number:'1.4-4' }}, {{ selectedDestination()!.longitude | number:'1.4-4' }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details panel (right) — content marker -->
+  <div class="details-panel" *ngIf="showDetailsPanel() && selectedMarker()">
+    <button class="details-close" (click)="closeDetails()">×</button>
+    <div class="details-body">
+      <div class="details-type" [style.color]="getMarkerTypeColor(selectedMarker()!.markerType)">
+        {{ selectedMarker()!.markerType }}
+        <span *ngIf="selectedMarker()!.subType"> · {{ selectedMarker()!.subType }}</span>
+      </div>
+      <h3>{{ selectedMarker()!.name }}</h3>
+    </div>
+  </div>
+
+</div>

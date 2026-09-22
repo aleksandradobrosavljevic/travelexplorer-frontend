@@ -1,0 +1,1007 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'leaflet/dist/leaflet.css';
+@import 'ngx-toastr/toastr';
+
+:root {
+  --bg-main: #f3f6f8;
+  --bg-card: #ffffff;
+  --ink-strong: #1f2937;
+  --ink-soft: #6b7280;
+  --line: #e5e7eb;
+  --accent-primary: #2a9d8f;
+  --accent-primary-hover: #23867a;
+  --accent-dark: #1d3557;
+  --scrollbar-track: #e5e7eb;
+  --scrollbar-thumb: #239485;
+  --scrollbar-thumb-hover: #1d7d71;
+}
+
+/* Marker for non-mandatory form fields, shown next to the field label. */
+.optional-tag {
+  margin-left: 6px;
+  font-size: 0.78em;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--ink-soft, #6b7280);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.optional-tag::before {
+  content: "(";
+}
+
+.optional-tag::after {
+  content: ")";
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track) !important;
+}
+
+*::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track) !important;
+  border-radius: 999px !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb) !important;
+  border: 2px solid var(--scrollbar-track) !important;
+  border-radius: 999px !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover) !important;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+.super-admin-layout .secondary-btn,
+.super-admin-layout .clear-filters-btn {
+  white-space: nowrap;
+}
+
+html:has(app-super-admin-layout),
+body:has(app-super-admin-layout) {
+  overflow: hidden;
+}
+
+body:has(app-super-admin-layout) app-root,
+body:has(app-super-admin-layout) .app-wrapper {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+body:has(app-super-admin-layout) .main-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body:has(app-super-admin-layout) .app-wrapper > app-footer {
+  display: none;
+}
+
+body:has(app-super-admin-layout) app-super-admin-layout {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+html:has(app-admin-destination-layout),
+body:has(app-admin-destination-layout) {
+  overflow: hidden;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--ink-strong);
+  background: linear-gradient(135deg, #edf3f8 0%, #f5f8fa 52%, #eef5f4 100%);
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+app-footer { margin-top: auto; }
+footer { margin-top: auto; }
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  min-height: 40px;
+  border: 1px solid rgba(42, 157, 143, 0.28);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1d3557;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(29, 53, 87, 0.06);
+}
+
+.pagination-btn:hover:not(:disabled),
+.pagination-btn:focus-visible:not(:disabled) {
+  border-color: #2a9d8f;
+  color: #0f766e;
+  outline: none;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-status {
+  color: #1d3557;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.toast-container .ngx-toastr {
+  border-radius: 0 0 12px 12px !important;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.18) !important;
+  padding: 18px 24px 18px 56px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  min-width: 700px !important;
+  max-width: 800px !important;
+  background-size: 20px !important;
+  background-position: 20px center !important;
+}
+
+.toast-top-center {
+  top: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.toast-success {
+  background-color: #f0fdf4 !important;
+  color: #166534 !important;
+  border: none !important;
+  border-top: 4px solid #22c55e !important;
+}
+
+.toast-error {
+  background-color: #fff1f2 !important;
+  color: #991b1b !important;
+  border: none !important;
+  border-top: 4px solid #ef4444 !important;
+}
+
+.toast-warning {
+  background-color: #fffbeb !important;
+  color: #92400e !important;
+  border: none !important;
+  border-top: 4px solid #f59e0b !important;
+}
+
+.toast-info {
+  background-color: #eff6ff !important;
+  color: #1e40af !important;
+  border: none !important;
+  border-top: 4px solid #3b82f6 !important;
+}
+
+.toast-close-button {
+  color: inherit !important;
+  opacity: 0.5 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.toast-close-button:hover {
+  opacity: 1 !important;
+}
+
+.toast-top-center {
+  top: 24px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+/* ── PrimeNG Select ──────────────────────────────────────── */
+.p-select-overlay,
+.p-select-panel {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+  z-index: 12050 !important;
+  color-scheme: light;
+  overflow: hidden !important;
+}
+
+.p-select-header {
+  background: #f0fdf9 !important;
+  border-bottom: 1px solid #d9f3ec !important;
+  color-scheme: light;
+  padding: 10px 12px !important;
+}
+
+.p-select-header .p-iconfield {
+  background: #ffffff !important;
+  border: 1px solid #239485 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.12) !important;
+  color-scheme: light;
+}
+
+.p-select-filter,
+.p-select-header .p-inputtext {
+  width: 100% !important;
+  height: 38px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  caret-color: #239485 !important;
+  color-scheme: light;
+}
+
+.p-select-filter::placeholder,
+.p-select-header .p-inputtext::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.p-select-header .p-inputicon,
+.p-select-header [data-p-icon="search"] {
+  color: #239485 !important;
+  stroke: #239485 !important;
+}
+
+.p-select-list-container {
+  background: #ffffff !important;
+  padding: 6px !important;
+}
+
+.p-select-list { background: #ffffff !important; }
+
+.p-select-option {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  margin-bottom: 4px !important;
+}
+
+.p-select-option:last-child { margin-bottom: 0 !important; }
+
+.p-select-option:hover,
+.p-select-option.p-focus {
+  background: #e8f7f1 !important;
+  color: #111827 !important;
+}
+
+.p-select-option.p-select-option-selected {
+  background: #239485 !important;
+  color: #ffffff !important;
+}
+
+.p-select-option.p-select-option-selected:hover {
+  background: #188a65 !important;
+  color: #ffffff !important;
+}
+
+.p-select {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 10px !important;
+  min-height: 46px;
+  box-shadow: none !important;
+}
+
+.p-select-label { color: #111827 !important; font-size: 14px; }
+.p-select-label.p-placeholder { color: #9ca3af !important; }
+.p-select-trigger { color: #6b7280 !important; }
+
+.p-select.p-focus {
+  border-color: #239485 !important;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.12) !important;
+  background: #ffffff !important;
+}
+
+.p-select-list-container::-webkit-scrollbar { width: 6px; }
+.p-select-list-container::-webkit-scrollbar-track { background: transparent; }
+.p-select-list-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+.p-select-list-container::-webkit-scrollbar-thumb:hover { background: #239485; }
+
+/* ── Modal ───────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-map .leaflet-container { border-radius: 10px; overflow: hidden; }
+.modal-map .leaflet-pane { z-index: auto !important; }
+.modal-map .leaflet-map-pane { z-index: auto !important; }
+.modal-map .leaflet-tile-pane { z-index: 200 !important; }
+.modal-map .leaflet-marker-pane { z-index: 600 !important; }
+.modal-map .leaflet-tooltip-pane { z-index: 650 !important; }
+.modal-map .leaflet-popup-pane { z-index: 700 !important; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-panel {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18), 0 4px 16px rgba(15, 23, 42, 0.08);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.18s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  flex-shrink: 0;
+}
+
+.modal-header h2 { margin: 0; font-size: 18px; font-weight: 700; color: #111827; }
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.modal-close-btn:hover { background: #f3f4f6; color: #374151; }
+
+.modal-body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid #f0f2f5;
+  flex-shrink: 0;
+}
+
+.modal-type-picker { padding: 24px 22px; }
+
+.type-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.type-picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  text-align: center;
+}
+
+.type-picker-btn:hover { border-color: #239485; background: #f0fdfb; transform: translateY(-2px); }
+.type-picker-icon { font-size: 28px; line-height: 1; }
+.type-picker-label { font-size: 14px; font-weight: 700; color: #111827; }
+.type-picker-hint { font-size: 12px; color: #6b7280; line-height: 1.4; }
+.modal-header-back { display: flex; align-items: center; gap: 10px; }
+
+.modal-back-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.12s;
+}
+
+.modal-back-btn:hover { color: #239485; }
+
+@media (max-width: 700px) {
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-panel { max-width: 100%; border-radius: 14px 14px 0 0; max-height: 85vh; }
+}
+
+@media (max-width: 500px) {
+  .type-picker-grid { grid-template-columns: 1fr; }
+}
+
+body.modal-open { overflow: hidden; }
+
+/* ── Maps ────────────────────────────────────────────────── */
+.maps-page .route-address-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.maps-page .route-address-search input {
+  background: #ffffff !important;
+  min-width: 0;
+  height: 34px;
+  border: 1px solid #dfeae4;
+  border-radius: 10px;
+  color: #1d3557;
+  font: inherit;
+  font-size: 0.78rem;
+  outline: none;
+  padding: 0 9px;
+}
+
+.maps-page .route-address-search input::placeholder {
+  color: #7d8a9b;
+}
+
+.maps-page .route-address-search input:focus {
+  border-color: #2a9d8f;
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.12);
+}
+
+.maps-page .route-address-submit {
+  min-height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: #2a9d8f;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 0 9px;
+}
+
+.maps-page .route-address-submit:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.maps-page .route-address-results {
+  display: grid;
+  gap: 4px;
+  max-height: 116px;
+  overflow-y: auto;
+}
+
+.maps-page .route-address-results button,
+.maps-page .route-address-results span {
+  border: 0;
+  border-radius: 9px;
+  background: #edf4f0;
+  color: #1d3557;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 8px;
+  text-align: left;
+}
+
+.maps-page .route-address-results button {
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .maps-page .route-panel.route-panel--picking {
+    top: auto;
+    bottom: 12px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+
+  .maps-page .route-panel.route-panel--picking .route-panel__head {
+    padding: 10px 12px;
+  }
+
+  .maps-page .route-panel.route-panel--picking .route-panel__body {
+    gap: 8px;
+    max-height: 240px;
+    padding: 10px;
+  }
+
+  .maps-page .route-panel.route-panel--picking .route-mode-control,
+  .maps-page .route-panel.route-panel--picking .route-summary,
+  .maps-page .route-panel.route-panel--picking .route-status--loading,
+  .maps-page .route-panel.route-panel--picking .route-point-card__actions,
+  .maps-page .route-panel.route-panel--picking .route-point-card:not(.route-point-card--armed) {
+    display: none;
+  }
+
+  .maps-page .route-panel.route-panel--picking .route-point-card {
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .maps-page .route-panel.route-panel--picking .route-address-results {
+    max-height: 86px;
+  }
+}
+
+/* ── PrimeNG Datepicker ──────────────────────────────────── */
+
+/* Panel wrapper */
+.p-datepicker-panel {
+  background: #ffffff !important;
+  border: 1.5px solid #239485 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(35, 148, 133, 0.14) !important;
+  padding: 12px !important;
+  z-index: 10100 !important;
+  pointer-events: auto !important;
+  color: #111827 !important;
+}
+
+.p-datepicker-calendar-container,
+.p-datepicker-panel .p-datepicker-calendar {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Header (month + year title + arrows) */
+.p-datepicker-header,
+.p-datepicker-panel .p-datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  border-bottom: 1px solid #e8f5f3 !important;
+  margin-bottom: 8px;
+  background: #f0faf9 !important;
+}
+
+/* Month/year text & clickable title buttons */
+.p-datepicker-title,
+.p-datepicker-panel .p-datepicker-title,
+.p-datepicker-panel .p-datepicker-title button,
+.p-datepicker-panel .p-datepicker-title span {
+  font-weight: 700 !important;
+  color: #111827 !important;
+  font-size: 14px;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+}
+
+.p-datepicker-panel .p-datepicker-title button:hover,
+.p-datepicker-panel .p-datepicker-title button:focus {
+  color: #239485 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Prev / Next arrows */
+.p-datepicker-prev-button,
+.p-datepicker-next-button,
+.p-datepicker-panel .p-datepicker-prev-button,
+.p-datepicker-panel .p-datepicker-next-button {
+  background: none !important;
+  border: none !important;
+  color: #239485 !important;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: background 0.12s;
+  box-shadow: none !important;
+}
+
+.p-datepicker-prev-button:hover,
+.p-datepicker-next-button:hover,
+.p-datepicker-panel .p-datepicker-prev-button:hover,
+.p-datepicker-panel .p-datepicker-next-button:hover {
+  background: #e6f7f5 !important;
+  color: #239485 !important;
+}
+
+.p-datepicker-prev-button:focus,
+.p-datepicker-next-button:focus,
+.p-datepicker-panel .p-datepicker-prev-button:focus,
+.p-datepicker-panel .p-datepicker-next-button:focus {
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.p-datepicker-prev-button svg,
+.p-datepicker-next-button svg,
+.p-datepicker-prev-button .p-icon,
+.p-datepicker-next-button .p-icon {
+  color: #239485 !important;
+  fill: none !important;
+  stroke: #239485 !important;
+}
+
+/* Weekday labels (Su Mo Tu ...) */
+.p-datepicker-weekday {
+  color: #239485 !important;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px;
+}
+
+/* Day cells */
+.p-datepicker-day-cell { padding: 2px; }
+
+.p-datepicker-day {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #374151 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: background 0.15s, color 0.15s;
+}
+
+/* Hover — svetlo zelena */
+.p-datepicker-day:hover {
+  background: #e6f7f5 !important;
+  color: #0f766e !important;
+  box-shadow: none !important;
+}
+
+/* Focus (keyboard nav) */
+.p-datepicker-day:focus,
+.p-datepicker-day.p-focus {
+  background: #e6f7f5 !important;
+  color: #0f766e !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Selected — tamno zelena, beli tekst */
+.p-datepicker-day.p-selected,
+.p-datepicker-day[aria-selected="true"],
+.p-datepicker-day-selected {
+  background: #239485 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+/* Selected + hover */
+.p-datepicker-day.p-selected:hover,
+.p-datepicker-day[aria-selected="true"]:hover {
+  background: #1d7d71 !important;
+  color: #ffffff !important;
+}
+
+/* Disabled days */
+.p-datepicker-day.p-disabled {
+  color: #d1d5db !important;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* Today — zeleni ring */
+.p-datepicker-today .p-datepicker-day {
+  border: 1.5px solid #239485 !important;
+  color: #239485 !important;
+  background: transparent !important;
+  font-weight: 700;
+}
+
+/* Today + selected */
+.p-datepicker-today .p-datepicker-day.p-selected,
+.p-datepicker-today .p-datepicker-day[aria-selected="true"] {
+  background: #239485 !important;
+  color: #ffffff !important;
+  border-color: #239485 !important;
+}
+
+/* Other month days */
+.p-datepicker-other-month .p-datepicker-day {
+  color: #c0cad4 !important;
+  opacity: 0.55;
+}
+
+/* ── Month picker ── */
+/* PrimeNG v19 koristi: .p-datepicker-month (cx('month'))
+   Starije verzije: .p-monthpicker-month
+   Pokrivamo oba da budemo sigurni */
+.p-datepicker-month,
+.p-monthpicker-month {
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  background: transparent !important;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  /* Reset PrimeNG theme CSS varijable koje uzrokuju crni hover */
+  --p-datepicker-panel-background: transparent;
+}
+
+.p-datepicker-month:hover,
+.p-monthpicker-month:hover,
+.p-datepicker-month.p-focus,
+.p-datepicker-month:focus {
+  background: #e6f7f5 !important;
+  color: #0f766e !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.p-datepicker-month.p-datepicker-month-selected,
+.p-datepicker-month[aria-selected="true"],
+.p-datepicker-month.p-highlight,
+.p-monthpicker-month.p-selected,
+.p-monthpicker-month[aria-selected="true"] {
+  background: #239485 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.p-datepicker-month.p-datepicker-month-selected:hover,
+.p-datepicker-month[aria-selected="true"]:hover,
+.p-monthpicker-month.p-selected:hover {
+  background: #1d7d71 !important;
+  color: #ffffff !important;
+}
+
+/* ── Year picker ── */
+/* PrimeNG v19 koristi: .p-datepicker-year (cx('year'))
+   Starije verzije: .p-yearpicker-year */
+.p-datepicker-year,
+.p-yearpicker-year {
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  background: transparent !important;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.p-datepicker-year:hover,
+.p-yearpicker-year:hover,
+.p-datepicker-year.p-focus,
+.p-datepicker-year:focus {
+  background: #e6f7f5 !important;
+  color: #0f766e !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.p-datepicker-year.p-datepicker-year-selected,
+.p-datepicker-year[aria-selected="true"],
+.p-datepicker-year.p-highlight,
+.p-yearpicker-year.p-selected,
+.p-yearpicker-year[aria-selected="true"] {
+  background: #239485 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.p-datepicker-year.p-datepicker-year-selected:hover,
+.p-datepicker-year[aria-selected="true"]:hover,
+.p-yearpicker-year.p-selected:hover {
+  background: #1d7d71 !important;
+  color: #ffffff !important;
+}
+
+/* Override PrimeNG button CSS varijable unutar panela koje uzrokuju crni hover */
+.p-datepicker-panel .p-datepicker-month,
+.p-datepicker-panel .p-datepicker-year {
+  --p-button-text-secondary-hover-background: #e6f7f5 !important;
+  --p-button-text-secondary-active-background: #239485 !important;
+  --p-button-text-secondary-color: #374151 !important;
+  --p-button-text-secondary-hover-color: #0f766e !important;
+}
+
+/* PrimeNG internal button reset — sprečava crni hover */
+.p-datepicker-panel button,
+.p-datepicker-panel [role="button"] {
+  --p-button-text-secondary-hover-background: transparent !important;
+  --p-button-text-secondary-active-background: transparent !important;
+  --p-button-text-secondary-color: #239485 !important;
+}
+
+.p-datepicker-panel button:focus,
+.p-datepicker-panel button:active,
+.p-datepicker-panel button.p-focus,
+.p-datepicker-panel [role="button"]:focus,
+.p-datepicker-panel [role="button"]:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Datepicker input (standalone, van register komponente) */
+.p-datepicker-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px 0 0 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  background: #ffffff !important;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.p-datepicker-input:focus {
+  border-color: #239485;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.12);
+}
+
+.p-datepicker-input::placeholder { color: #9ca3af; }
+
+.p-datepicker { display: flex; width: 100%; }
+
+.p-datepicker-dropdown {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-left: none !important;
+  border-radius: 0 10px 10px 0 !important;
+  padding: 0 12px;
+  color: #239485 !important;
+  cursor: pointer;
+  min-height: 46px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.p-datepicker-dropdown:hover {
+  background: #f0faf9 !important;
+  color: #1d7d71 !important;
+}
+
+.p-datepicker-dropdown svg,
+.p-datepicker-dropdown .p-icon {
+  color: #239485 !important;
+  fill: none !important;
+  stroke: #239485 !important;
+}
+
+/* Timepicker */
+.p-timepicker,
+.p-datepicker-panel .p-timepicker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0 4px;
+  border-top: 1px solid #e8f5f3 !important;
+  margin-top: 8px;
+  background: #f0faf9 !important;
+}
+
+.p-timepicker-hour,
+.p-timepicker-minute {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.p-timepicker span,
+.p-datepicker-panel .p-timepicker span {
+  color: #111827 !important;
+  font-weight: 600;
+}
+
+.p-timepicker-separator,
+.p-datepicker-panel .p-timepicker .p-timepicker-separator {
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151 !important;
+  padding-bottom: 2px;
+}
+
+[data-pc-group-section="timepickerbutton"] {
+  color: #239485 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+
+[data-pc-group-section="timepickerbutton"]:hover {
+  background: #e6f7f5 !important;
+  color: #239485 !important;
+  box-shadow: none !important;
+}
+
+[data-pc-group-section="timepickerbutton"]:focus,
+[data-pc-group-section="timepickerbutton"]:active {
+  background: #239485 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+[data-pc-group-section="timepickerbutton"]:focus svg,
+[data-pc-group-section="timepickerbutton"]:active svg,
+[data-pc-group-section="timepickerbutton"]:focus .p-icon,
+[data-pc-group-section="timepickerbutton"]:active .p-icon {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+[data-pc-group-section="timepickerbutton"] svg,
+[data-pc-group-section="timepickerbutton"] .p-icon {
+  color: #239485 !important;
+  fill: #239485 !important;
+  stroke: #239485 !important;
+}
+
+/* Global button focus reset */
+button:focus,
+button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}

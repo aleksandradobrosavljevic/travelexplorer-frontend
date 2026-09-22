@@ -1,0 +1,32 @@
+.footer {
+  margin-top: 0; 
+  padding: 12px 32px;
+
+  background: #f8faf9;
+  border-top: 1px solid #e3ebe7;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 13px;
+  color: #6c7a89;
+}
+
+.footer-left {
+  opacity: 0.9;
+}
+
+.footer-right {
+  opacity: 0.9;
+}
+
+/* 📱 mobile */
+@media (max-width: 700px) {
+  .footer {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    padding: 10px 20px;
+  }
+}

@@ -1,0 +1,195 @@
+<div class="saved-trips-page">
+  <app-header mode="full" (openProfile)="openUserProfile()"></app-header>
+
+  <app-user-profile
+    *ngIf="isUserProfileOpen"
+    (close)="closeUserProfile()">
+  </app-user-profile>
+
+  <section class="saved-trips-section">
+    <div class="top-bar">
+      <a routerLink="/favourites" class="back-link">&larr; {{ 'favourites.backToFavourites' | translate }}</a>
+    </div>
+
+    <div *ngIf="isLoading()" class="page-state-card">
+      <h2>{{ 'favourites.loadingItems' | translate }}</h2>
+      <p>{{ 'common.pleaseWait' | translate }}</p>
+    </div>
+
+    <div *ngIf="!isLoading() && errorMessage()" class="page-state-card error-state">
+      <h2>{{ 'common.errorTitle' | translate }}</h2>
+      <p>{{ errorMessage() }}</p>
+      <button class="primary-action" type="button" (click)="loadFavourites()">
+        {{ 'common.tryAgain' | translate }}
+      </button>
+    </div>
+
+    <section
+      *ngIf="!isLoading() && !errorMessage() && selectedDestinationGroup() as selectedGroup"
+      class="destination-detail-panel destination-detail-page-panel">
+      <div class="destination-detail-head">
+        <div>
+          <p>{{ 'favourites.savedInDestination' | translate }}</p>
+          <h1>{{ selectedGroup.destination }}</h1>
+        </div>
+      </div>
+
+      <div class="destination-detail-controls">
+        <div class="type-filter-tabs" aria-label="Favourite type filter">
+          <button
+            *ngFor="let filter of destinationTypeFilters; trackBy: trackByFilter"
+            type="button"
+            [class.active]="destinationTypeFilter() === filter"
+            (click)="setDestinationTypeFilter(filter)">
+            {{ filterLabel(filter) }}
+          </button>
+        </div>
+
+        <div class="favourites-search-bar favourites-search-bar--items">
+          <input
+            type="text"
+            [placeholder]="'favourites.searchSavedByName' | translate"
+            [ngModel]="destinationItemSearch()"
+            (ngModelChange)="updateDestinationItemSearch($event)" />
+        </div>
+
+        <label class="favourites-filter-field favourites-sort-field">
+          <span>{{ 'sort.label' | translate }}</span>
+          <p-select
+            [options]="sortOptions"
+            [ngModel]="destinationSort()"
+            (ngModelChange)="updateDestinationSort($event)"
+            optionLabel="labelKey"
+            optionValue="value">
+            <ng-template #selectedItem let-option>
+              {{ option.labelKey | translate }}
+            </ng-template>
+            <ng-template #item let-option>
+              {{ option.labelKey | translate }}
+            </ng-template>
+          </p-select>
+        </label>
+      </div>
+
+      <div class="saved-trips-grid">
+        <article
+          class="saved-trip-card"
+          *ngFor="let item of pagedDestinationItems(); trackBy: trackByFavouriteId"
+          tabindex="0"
+          role="link"
+          (click)="openDetails(item)"
+          (keyup.enter)="openDetails(item)">
+          <div class="card-image-wrapper">
+            <img
+              [src]="item.imageUrl"
+              [alt]="item.title"
+              class="card-image"
+              loading="lazy"
+              (error)="onImageError($event)" />
+
+            <div class="rating-badge">
+              <svg class="rating-star" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 3.8L14.47 8.81L20 9.62L16 13.52L16.94 19.02L12 16.42L7.06 19.02L8 13.52L4 9.62L9.53 8.81L12 3.8Z"
+                  fill="#8FA16E"
+                  stroke="#8FA16E"
+                  stroke-width="1.2"
+                  stroke-linejoin="round" />
+              </svg>
+              <span>{{ (item.averageRating ?? 0) | number:'1.2-2' }}</span>
+              <span class="review-count">{{ formatReviews(item) }}</span>
+            </div>
+
+            <button
+              class="heart-btn"
+              type="button"
+              [attr.aria-label]="'favourites.removeSavedItem' | translate"
+              (click)="requestRemoveFavourite(item, $event)">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+                  fill="#F16E7A"
+                  stroke="#F16E7A"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="card-content">
+            <div class="card-main-row">
+              <h2 [title]="item.title">{{ item.title }}</h2>
+              <div class="price-wrapper" *ngIf="hasDisplayPrice(item)">
+                <span class="price">{{ formatPrice(item) }}</span>
+                <span class="price-unit" *ngIf="getPriceUnit(item)">{{ getPriceUnit(item) }}</span>
+              </div>
+            </div>
+
+            <p class="location-row">
+              <svg class="location-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 21C12 21 18 15.4 18 10.5C18 7.19 15.31 4.5 12 4.5C8.69 4.5 6 7.19 6 10.5C6 15.4 12 21 12 21Z"
+                  stroke="#8FA16E"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round" />
+                <circle cx="12" cy="10.5" r="2.2" stroke="#8FA16E" stroke-width="1.6" />
+              </svg>
+              <span>{{ item.location }}</span>
+            </p>
+          </div>
+
+          <div class="card-footer">
+            <a class="footer-action details-link" href="" (click)="openDetails(item, $event)">
+              <span>{{ 'common.viewDetails' | translate }}</span>
+              <span class="details-arrow">&gt;</span>
+            </a>
+          </div>
+        </article>
+      </div>
+
+      <div class="pagination-controls" *ngIf="filteredDestinationItems().length > itemPageSize()">
+        <button class="pagination-btn" type="button" [disabled]="currentItemPage() === 1" (click)="changeItemPage(-1)">
+          {{ 'common.previous' | translate }}
+        </button>
+        <span class="pagination-status">{{ 'common.pageOf' | translate: { page: currentItemPage(), total: destinationItemsTotalPages() } }}</span>
+        <button class="pagination-btn" type="button" [disabled]="currentItemPage() === destinationItemsTotalPages()" (click)="changeItemPage(1)">
+          {{ 'common.next' | translate }}
+        </button>
+      </div>
+
+      <div class="page-state-card empty-state compact-state" *ngIf="filteredDestinationItems().length === 0">
+        <h2>{{ 'favourites.noSavedItemsMatch' | translate }}</h2>
+        <p>{{ 'favourites.tryAnotherTypeOrSearch' | translate }}</p>
+      </div>
+    </section>
+
+    <div *ngIf="!isLoading() && !errorMessage() && !selectedDestinationGroup()" class="page-state-card empty-state">
+      <h2>{{ 'favourites.destinationNotFound' | translate }}</h2>
+      <p>{{ 'favourites.destinationUnavailable' | translate }}</p>
+      <a class="primary-action" routerLink="/favourites">{{ 'favourites.backToFavourites' | translate }}</a>
+    </div>
+  </section>
+
+  <div class="confirm-overlay" *ngIf="pendingRemoveItem() as item" (click)="cancelRemoveFavourite()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+            fill="#F16E7A" />
+        </svg>
+      </div>
+
+      <h2>{{ 'favourites.removeTitle' | translate }}</h2>
+      <p>{{ 'favourites.removeText' | translate }}</p>
+      <strong>{{ item.title }}</strong>
+
+      <div class="confirm-actions">
+        <button class="secondary-action" type="button" (click)="cancelRemoveFavourite()">{{ 'common.cancel' | translate }}</button>
+        <button class="danger-action" type="button" (click)="confirmRemoveFavourite()">{{ 'favourites.confirmRemove' | translate }}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,4 @@
+<div class="section-header">
+  <h2>{{ title }}</h2>
+  <a *ngIf="routePath && linkText" [routerLink]="routePath" [queryParams]="queryParams">{{ linkText }}</a>
+</div>

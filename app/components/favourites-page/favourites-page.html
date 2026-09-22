@@ -1,0 +1,212 @@
+<div class="saved-trips-page">
+  <app-header mode="full" (openProfile)="openUserProfile()"></app-header>
+
+  <app-user-profile
+    *ngIf="isUserProfileOpen"
+    (close)="closeUserProfile()">
+  </app-user-profile>
+
+  <section class="saved-trips-section">
+    <div class="top-bar">
+      <a routerLink="/tourist-dashboard" class="back-link">&larr; {{ 'common.backToDashboard' | translate }}</a>
+    </div>
+
+    <div class="saved-trips-header">
+      <h1>{{ 'favourites.title' | translate }}</h1>
+      <p>{{ subtitle() }}</p>
+    </div>
+
+    <div *ngIf="isLoading()" class="page-state-card">
+      <h2>{{ 'favourites.loadingTitle' | translate }}</h2>
+      <p>{{ 'common.pleaseWait' | translate }}</p>
+    </div>
+
+    <div *ngIf="!isLoading() && errorMessage()" class="page-state-card error-state">
+      <h2>{{ 'common.errorTitle' | translate }}</h2>
+      <p>{{ errorMessage() }}</p>
+      <button class="primary-action" type="button" (click)="ngOnInit()">
+        {{ 'common.tryAgain' | translate }}
+      </button>
+    </div>
+
+    <div *ngIf="!isLoading() && !errorMessage() && savedCount() === 0" class="page-state-card empty-state">
+      <div class="empty-illustration" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="14" width="44" height="36" rx="14" stroke="#8FA16E" stroke-width="2.2" />
+          <path d="M32 44L29.2 41.45C19.5 32.7 13 26.83 13 19.85C13 14.58 17.13 10.5 22.2 10.5C25.14 10.5 27.91 11.87 29.7 14.16C31.49 11.87 34.26 10.5 37.2 10.5C42.27 10.5 46.4 14.58 46.4 19.85C46.4 26.83 39.9 32.7 30.2 41.47L32 44Z" fill="#F16E7A" fill-opacity="0.14" stroke="#F16E7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <h2>{{ 'favourites.emptyTitle' | translate }}</h2>
+      <p>{{ 'favourites.emptyText' | translate }}</p>
+      <a class="primary-action" routerLink="/tourist-dashboard">{{ 'favourites.startExploring' | translate }}</a>
+    </div>
+
+    <div *ngIf="!isLoading() && !errorMessage() && savedCount() > 0" class="destination-search-panel">
+      <label class="favourites-filter-field" for="favourite-destination-search">
+        <span>{{ 'favourites.searchDestinations' | translate }}</span>
+        <div class="favourites-search-bar">
+          <input
+            id="favourite-destination-search"
+            type="text"
+            name="favourite-destination-search"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            [placeholder]="'favourites.searchDestinationsPlaceholder' | translate"
+            [ngModel]="destinationSearch()"
+            (ngModelChange)="updateDestinationSearch($event)" />
+        </div>
+      </label>
+
+      <label class="favourites-filter-field">
+        <span>{{ 'sort.label' | translate }}</span>
+        <p-select
+          [options]="sortOptions"
+          [ngModel]="favouritesSort()"
+          (ngModelChange)="updateSort($event)"
+          optionLabel="labelKey"
+          optionValue="value">
+          <ng-template #selectedItem let-option>
+            {{ option.labelKey | translate }}
+          </ng-template>
+          <ng-template #item let-option>
+            {{ option.labelKey | translate }}
+          </ng-template>
+        </p-select>
+      </label>
+    </div>
+
+    <div *ngIf="!isLoading() && !errorMessage() && savedCount() > 0" class="favourites-groups">
+      <section class="favourite-destination-group" *ngFor="let group of pagedDestinationGroups(); trackBy: trackByDestination">
+        <div class="destination-group-head">
+          <h2>{{ group.destination }}</h2>
+        </div>
+
+        <div class="saved-trips-grid">
+          <article
+            class="saved-trip-card"
+            *ngFor="let item of group.previewItems; trackBy: trackByFavouriteId"
+            tabindex="0"
+            role="link"
+            (click)="openDetails(item)"
+            (keyup.enter)="openDetails(item)">
+            <div class="card-image-wrapper">
+              <img
+                [src]="item.imageUrl"
+                [alt]="item.title"
+                class="card-image"
+                loading="lazy"
+                (error)="onImageError($event)" />
+
+              <div class="rating-badge">
+                <svg class="rating-star" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 3.8L14.47 8.81L20 9.62L16 13.52L16.94 19.02L12 16.42L7.06 19.02L8 13.52L4 9.62L9.53 8.81L12 3.8Z"
+                    fill="#8FA16E"
+                    stroke="#8FA16E"
+                    stroke-width="1.2"
+                    stroke-linejoin="round" />
+                </svg>
+                <span>{{ (item.averageRating ?? 0) | number:'1.2-2' }}</span>
+                <span class="review-count">{{ formatReviews(item) }}</span>
+              </div>
+
+              <button
+                class="heart-btn"
+                type="button"
+                [attr.aria-label]="'favourites.removeSavedItem' | translate"
+                (click)="requestRemoveFavourite(item, $event)">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+                    fill="#F16E7A"
+                    stroke="#F16E7A"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="card-content">
+              <div class="card-main-row">
+                <h2 [title]="item.title">{{ item.title }}</h2>
+                <div class="price-wrapper" *ngIf="hasDisplayPrice(item)">
+                  <span class="price">{{ formatPrice(item) }}</span>
+                  <span class="price-unit" *ngIf="getPriceUnit(item)">{{ getPriceUnit(item) }}</span>
+                </div>
+              </div>
+
+              <p class="location-row">
+                <svg class="location-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 21C12 21 18 15.4 18 10.5C18 7.19 15.31 4.5 12 4.5C8.69 4.5 6 7.19 6 10.5C6 15.4 12 21 12 21Z"
+                    stroke="#8FA16E"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <circle cx="12" cy="10.5" r="2.2" stroke="#8FA16E" stroke-width="1.6" />
+                </svg>
+                <span>{{ item.location }}</span>
+              </p>
+            </div>
+
+            <div class="card-footer">
+              <a class="footer-action details-link" href="" (click)="openDetails(item, $event)">
+                <span>{{ 'common.viewDetails' | translate }}</span>
+                <span class="details-arrow">&gt;</span>
+              </a>
+            </div>
+          </article>
+
+          <button
+            *ngIf="group.hiddenCount > 0"
+            type="button"
+            class="saved-trip-card more-favourites-card"
+            (click)="openDestinationGroup(group, $event)">
+            <span>+{{ group.hiddenCount }}</span>
+            <strong>{{ 'favourites.viewAllSavedItems' | translate }}</strong>
+            <small>{{ group.destination }}</small>
+          </button>
+        </div>
+      </section>
+
+      <div class="page-state-card empty-state" *ngIf="groupedFavourites().length === 0">
+        <h2>{{ 'favourites.noDestinationMatches' | translate }}</h2>
+        <p>{{ 'favourites.tryAnotherDestination' | translate }}</p>
+      </div>
+
+      <div class="pagination-controls" *ngIf="groupedFavourites().length > destinationPageSize">
+        <button class="pagination-btn" type="button" [disabled]="currentDestinationPage() === 1" (click)="changeDestinationPage(-1)">
+          {{ 'common.previous' | translate }}
+        </button>
+        <span class="pagination-status">{{ 'common.pageOf' | translate: { page: currentDestinationPage(), total: destinationTotalPages() } }}</span>
+        <button class="pagination-btn" type="button" [disabled]="currentDestinationPage() === destinationTotalPages()" (click)="changeDestinationPage(1)">
+          {{ 'common.next' | translate }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="confirm-overlay" *ngIf="pendingRemoveItem() as item" (click)="cancelRemoveFavourite()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+            fill="#F16E7A" />
+        </svg>
+      </div>
+
+      <h2>{{ 'favourites.removeTitle' | translate }}</h2>
+      <p>{{ 'favourites.removeText' | translate }}</p>
+      <strong>{{ item.title }}</strong>
+
+      <div class="confirm-actions">
+        <button class="secondary-action" type="button" (click)="cancelRemoveFavourite()">{{ 'common.cancel' | translate }}</button>
+        <button class="danger-action" type="button" (click)="confirmRemoveFavourite()">{{ 'favourites.confirmRemove' | translate }}</button>
+      </div>
+    </div>
+  </div>
+</div>

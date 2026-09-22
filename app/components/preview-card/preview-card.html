@@ -1,0 +1,83 @@
+<div class="card" (click)="onCardClick()">
+  <div class="card-image-wrapper">
+    <img
+      [src]="image"
+      [alt]="title"
+      class="card-image"
+      loading="lazy"
+    />
+
+    <button class="favorite-btn" (click)="onFavoriteClick($event)">
+      <svg
+        class="favorite-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+          [attr.fill]="isFavorite ? '#F16E7A' : 'transparent'"
+          [attr.stroke]="isFavorite ? '#F16E7A' : '#2F5D50'"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <div class="card-content">
+    <div class="title-row">
+      <h3 class="title">{{ title }}</h3>
+
+      <div class="rating-badge">
+        <svg
+          class="rating-star"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 3.8L14.47 8.81L20 9.62L16 13.52L16.94 19.02L12 16.42L7.06 19.02L8 13.52L4 9.62L9.53 8.81L12 3.8Z"
+            fill="#8FA16E"
+            stroke="#8FA16E"
+            stroke-width="1.2"
+            stroke-linejoin="round"
+          />
+        </svg>
+
+        <span>{{ rating | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <p class="location">
+      <svg
+        class="location-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21C12 21 18 15.4 18 10.5C18 7.19 15.31 4.5 12 4.5C8.69 4.5 6 7.19 6 10.5C6 15.4 12 21 12 21Z"
+          stroke="#A8B0BB"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <circle
+          cx="12"
+          cy="10.5"
+          r="2.2"
+          stroke="#A8B0BB"
+          stroke-width="1.6"
+        />
+      </svg>
+
+      <span>{{ location }}</span>
+    </p>
+
+    <p class="price" [class.price--empty]="!price">
+      {{ price ? (price === 'Free' ? ('common.free' | translate) : price) : '-' }}
+    </p>
+  </div>
+</div>

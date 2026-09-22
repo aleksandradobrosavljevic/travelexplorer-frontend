@@ -1,0 +1,689 @@
+.publisher-page {
+  min-height: 100vh;
+  background: #f3f6f8;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 16px 32px 40px;
+}
+ 
+.content-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+ 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+ 
+.page-header h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+ 
+.page-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+ 
+.back-btn {
+  background: #239485;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+ 
+.back-btn:hover {
+  background: #1d7d71;
+}
+ 
+.form-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+ 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+ 
+.form-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+ 
+.form-group input,
+.form-group textarea,
+.form-group select {
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #111827;
+  background: #fafafa;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+ 
+.form-group textarea {
+  height: auto;
+  padding: 12px 14px;
+  resize: vertical;
+  min-height: 100px;
+}
+ 
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #239485;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.12);
+}
+ 
+.form-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-color: #fafafa;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.image-count {
+  align-self: flex-end;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.image-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  overflow-x: auto;
+  padding: 6px 0 10px;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.image-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.image-strip.dragging {
+  cursor: grabbing;
+}
+
+.image-strip.dragging img {
+  pointer-events: none;
+}
+
+.image-thumb,
+.image-add-card {
+  position: relative;
+  flex: 0 0 138px;
+  width: 138px;
+  height: 96px;
+  border-radius: 8px;
+}
+
+.image-thumb {
+  cursor: zoom-in;
+}
+
+.image-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #dbe4ee;
+  background: #f8fafc;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #d6dee8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.16);
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.image-remove-btn:hover {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.image-add-card {
+  border: 1.5px dashed #c5d1de;
+  background: #ffffff;
+  color: #239485;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.image-add-card:hover,
+.image-add-card:focus-visible {
+  border-color: #239485;
+  background: #f3fbf9;
+  color: #1d7d71;
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(15, 23, 42, 0.82);
+}
+
+.image-lightbox img {
+  max-width: min(960px, 92vw);
+  max-height: 86vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+.image-lightbox-close {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+ 
+.dynamic-section {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #f3f4f6;
+}
+ 
+.map-container-wrapper {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.map-container {
+  height: 300px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.map-container-wrapper.is-disabled .map-container {
+  filter: grayscale(0.85) brightness(0.95);
+  cursor: not-allowed;
+}
+
+.map-disabled-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(243, 246, 248, 0.55);
+  cursor: not-allowed;
+  border-radius: 10px;
+}
+
+.map-disabled-hint {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  letter-spacing: 0.01em;
+}
+ 
+.map-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 4px 0 0;
+}
+ 
+.map-search-wrapper {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.map-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 14px;
+  background: #fafafa;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.map-search-box:focus-within {
+  border-color: #239485;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.14);
+}
+
+.map-search-box.is-disabled {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.map-search-box.is-disabled .map-search-icon {
+  opacity: 0.5;
+}
+
+.map-search-box.is-disabled .map-search-input {
+  cursor: not-allowed;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.map-search-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.form-group .map-search-input {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 14px;
+  color: #111827;
+  flex: 1;
+  padding: 0 !important;
+  box-shadow: none !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+
+.map-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.map-search-spinner {
+  font-size: 14px;
+  color: #239485;
+  animation: mapSpin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes mapSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.map-search-clear {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.map-search-clear:hover {
+  color: #374151;
+}
+
+.map-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.map-search-result-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  line-height: 1.4;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.map-search-result-item:last-child {
+  border-bottom: none;
+}
+
+.map-search-result-item:hover {
+  background-color: #f0faf9;
+  color: #239485;
+}
+
+.map-coords-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  min-height: 28px;
+}
+
+.clear-pin-btn {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.clear-pin-btn:hover {
+  color: #b91c1c;
+}
+ 
+.price-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+ 
+.price-suffix-wrapper {
+  position: relative;
+  flex: 1;
+}
+ 
+.price-suffix-wrapper input {
+  width: 100%;
+  padding-right: 60px;
+}
+ 
+.price-suffix {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: #239485;
+  pointer-events: none;
+}
+ 
+.currency-select {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+/* ── PrimeNG Select — form-field dropdowns ─────────────────── */
+:host ::ng-deep .form-field-select {
+  width: 100% !important;
+  height: 44px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #e5e7eb !important;
+  background: #fafafa !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+}
+
+:host ::ng-deep .form-field-select:hover {
+  border-color: #239485 !important;
+}
+
+:host ::ng-deep .form-field-select.p-focus,
+:host ::ng-deep .form-field-select.p-select-open {
+  border-color: #239485 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.14) !important;
+}
+
+:host ::ng-deep .form-field-select .p-select-label {
+  font-size: 14px !important;
+  color: #111827 !important;
+  padding: 0 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+:host ::ng-deep .form-field-select .p-select-label.p-placeholder {
+  color: #9ca3af !important;
+}
+
+:host ::ng-deep .form-field-select .p-select-dropdown {
+  color: #6b7280 !important;
+  width: 36px !important;
+}
+
+:host ::ng-deep .form-field-select .p-select-clear-icon {
+  color: #9ca3af !important;
+  right: 38px !important;
+}
+
+:host ::ng-deep .form-field-select.input-error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+:host ::ng-deep .currency-select {
+  width: 110px !important;
+  flex-shrink: 0 !important;
+}
+
+:host ::ng-deep .p-select-overlay {
+  border-radius: 10px !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+:host ::ng-deep .p-select-list-container .p-select-option {
+  font-size: 14px !important;
+  color: #111827 !important;
+  padding: 10px 14px !important;
+  background: #ffffff !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+:host ::ng-deep .p-select-list-container .p-select-option:hover {
+  background: #f0faf9 !important;
+  color: #239485 !important;
+}
+
+:host ::ng-deep .p-select-list-container .p-select-option.p-selected,
+:host ::ng-deep .p-select-list-container .p-select-option[aria-selected="true"] {
+  background: #239485 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+ 
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+ 
+.submit-btn {
+  background: linear-gradient(135deg, #239485, #1d7d71);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(35, 148, 133, 0.3);
+}
+ 
+.submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(35, 148, 133, 0.4);
+}
+ 
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 2px;
+}
+
+.field-hint {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #6b7280;
+  margin-top: -2px;
+}
+
+.input-error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.map-error {
+  border-color: #dc2626 !important;
+}
+
+/* ── PrimeNG Datepicker — publisher form ─────────────────────
+   styleClass="publisher-datepicker"
+   Panel stilove vuče iz globalnog styles.css automatski.
+   Ovde samo podešavamo input+dropdown da se uklapaju u formu.
+   ─────────────────────────────────────────────────────────── */
+
+:host ::ng-deep .publisher-datepicker.p-datepicker {
+  width: 100%;
+}
+
+:host ::ng-deep .publisher-datepicker .p-datepicker-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px 0 0 10px;
+  font-size: 14px;
+  color: #111827;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:host ::ng-deep .publisher-datepicker .p-datepicker-input::placeholder {
+  color: #9ca3af;
+}
+
+:host ::ng-deep .publisher-datepicker .p-datepicker-input:focus {
+  border-color: #239485;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(35, 148, 133, 0.12);
+  outline: none;
+}
+
+:host ::ng-deep .publisher-datepicker .p-datepicker-dropdown {
+  background: #fafafa !important;
+  border: 1.5px solid #e5e7eb !important;
+  border-left: none !important;
+  border-radius: 0 10px 10px 0 !important;
+  color: #239485 !important;
+  height: 44px;
+  padding: 0 12px;
+  transition: background 0.15s ease;
+}
+
+:host ::ng-deep .publisher-datepicker .p-datepicker-dropdown:hover {
+  background: #f0faf9 !important;
+}
+
+:host ::ng-deep .publisher-datepicker .p-datepicker-dropdown svg,
+:host ::ng-deep .publisher-datepicker .p-datepicker-dropdown .p-icon {
+  color: #239485 !important;
+  stroke: #239485 !important;
+  fill: none !important;
+}
+
+:host ::ng-deep .publisher-datepicker.input-error .p-datepicker-input {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}

@@ -1,0 +1,129 @@
+<app-publisher-header></app-publisher-header>
+
+<div class="publisher-map-page">
+  <div class="map-shell">
+    <div id="publisherMap"></div>
+
+    <div
+      class="pin-popup"
+      *ngIf="showDetailsPanel() && selectedItem() && popupX() !== null"
+      [style.left.px]="popupX()"
+      [style.top.px]="popupY()">
+      <button class="popup-close" (click)="closeDetails()">&times;</button>
+      <img class="popup-img" [src]="selectedItem()!.image" [alt]="selectedItem()!.name" />
+      <div class="popup-body">
+        <div class="popup-name">{{ selectedItem()!.name }}</div>
+        <div class="popup-badges">
+          <span
+            class="popup-badge"
+            [class.badge-object]="selectedItem()!.markerType === 'Object'"
+            [class.badge-event]="selectedItem()!.markerType === 'Event'"
+            [class.badge-activity]="selectedItem()!.markerType === 'Activity'">
+            {{ detailTypeLabel(selectedItem()!) }}
+          </span>
+          <span class="my-badge" *ngIf="isMyItem()">&#10003; {{ 'publisher.map.yours' | translate }}</span>
+          <span class="rating-badge" *ngIf="selectedItem()!.rating > 0">
+            &#9733; {{ selectedItem()!.rating.toFixed(1) }}
+            <span class="rating-count">&middot; {{ selectedItem()!.reviewCount }}</span>
+          </span>
+        </div>
+        <p class="popup-address" *ngIf="selectedItem()!.address">
+          {{ selectedItem()!.address }}
+        </p>
+        <div class="popup-chips">
+          <span class="chip chip-price" *ngIf="selectedItem()!.price > 0">{{ selectedItem()!.currency }} {{ selectedItem()!.price }}</span>
+          <span class="chip" *ngIf="!selectedItem()!.price">{{ 'common.free' | translate }}</span>
+        </div>
+        <button class="popup-details-btn" *ngIf="isMyItem()" (click)="goToDetails()">
+          {{ 'common.viewDetails' | translate }} &rarr;
+        </button>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="side-card destination-card">
+        <div class="side-card-label">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#239485" stroke-width="2.5">
+            <circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4" stroke-linecap="round"/>
+          </svg>
+          {{ 'map.searchDestination' | translate }}
+        </div>
+        <div class="destination-search">
+          <div class="search-input-wrap" [class.has-value]="destinationQuery()">
+            <input
+              type="text"
+              [ngModel]="destinationQuery()"
+              (ngModelChange)="destinationQuery.set($event); showDestinationDropdown.set(true)"
+              (focus)="showDestinationDropdown.set(true)"
+              (keydown.enter)="onDestinationEnter()"
+              [placeholder]="'publisher.map.searchDestinationPlaceholder' | translate"
+            />
+            <button *ngIf="destinationQuery()" class="clear-btn" (click)="clearDestination()" [attr.aria-label]="'common.clear' | translate">&times;</button>
+          </div>
+          <div class="destination-dropdown" *ngIf="showDestinationDropdown() && filteredDestinations().length > 0">
+            <div class="destination-option" *ngFor="let dest of filteredDestinations()" (click)="selectDestination(dest)">
+              {{ dest.name }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-label">{{ 'publisher.map.filters' | translate }}</div>
+        <div class="visibility-toggle">
+          <button class="vis-btn" [class.active]="!showOnlyMine()" (click)="showOnlyMine.set(false)">
+            {{ 'common.all' | translate }}
+          </button>
+          <button class="vis-btn" [class.active]="showOnlyMine()" (click)="showOnlyMine.set(true)">
+            &#10003; {{ 'publisher.map.yours' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-label">{{ 'common.searchByName' | translate }}</div>
+        <div class="filter-search-wrap">
+          <input
+            type="text"
+            [ngModel]="nameSearch()"
+            (ngModelChange)="onNameSearchChange($event)"
+            [placeholder]="'publisher.map.searchContentPlaceholder' | translate"
+          />
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-label">{{ 'publisher.map.minRating' | translate }}</div>
+        <div class="rating-pills">
+          <button class="rating-pill" [class.active]="minRating() === 0" (click)="setMinRating(0)">{{ 'publisher.map.ratingAny' | translate }}</button>
+          <button class="rating-pill" [class.active]="minRating() === 3" (click)="setMinRating(3)">&#9733; 3+</button>
+          <button class="rating-pill" [class.active]="minRating() === 4" (click)="setMinRating(4)">&#9733; 4+</button>
+          <button class="rating-pill" [class.active]="minRating() === 4.5" (click)="setMinRating(4.5)">&#9733; 4.5+</button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-label">{{ 'publisher.map.contentTypes' | translate }}</div>
+        <div class="subtype-pills" *ngFor="let group of filterGroups()">
+          <button
+            *ngFor="let sub of group.subtypes"
+            class="subtype-pill"
+            [class.active]="sub.checked"
+            [style.--pill-color]="getSubtypeColor(sub.name)"
+            (click)="toggleSubtypeItem(sub, group)">
+            <span class="subtype-icon">{{ getSubtypeEmoji(sub.name) }}</span>
+            {{ subtypeLabel(sub.name) }}
+          </button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <button class="clear-all-btn" (click)="clearFilters()">{{ 'common.clearAll' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="loading-indicator" *ngIf="isLoading()">
+      {{ 'publisher.map.loadingMarkers' | translate }}
+    </div>
+  </div>
+</div>

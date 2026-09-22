@@ -1,0 +1,255 @@
+<div class="profile-overlay" (click)="closePanel()"></div>
+
+<aside class="profile-panel" (click)="$event.stopPropagation()">
+  <button
+    class="close-btn"
+    type="button"
+    (click)="closePanel()"
+    [attr.aria-label]="'profile.closePanel' | translate">
+    &times;
+  </button>
+
+  <div class="profile-header">
+    <div class="avatar-block">
+      <label class="avatar avatar-edit" [class.uploading]="isUploadingAvatar()" aria-label="Change profile photo">
+        <input type="file" accept="image/*" (change)="uploadAvatar($event)" hidden />
+        <img *ngIf="avatarUrl(); else avatarInitials" [src]="avatarUrl()!" alt="Profile photo" />
+        <ng-template #avatarInitials>{{ avatarInitial() }}</ng-template>
+        <span class="avatar-camera">photo_camera</span>
+      </label>
+      <button
+        *ngIf="avatarUrl()"
+        type="button"
+        class="avatar-remove-btn"
+        [disabled]="isUploadingAvatar()"
+        (click)="removeAvatar()">
+        {{ 'common.remove' | translate }}
+      </button>
+    </div>
+
+    <div class="profile-main-info">
+      <h2>{{ user().firstName }} {{ user().lastName }}</h2>
+      <p>{{ user().email }}</p>
+    </div>
+
+    <button
+      *ngIf="!isEditMode()"
+      pButton
+      type="button"
+      class="profile-action-btn edit-profile-btn"
+      (click)="startEdit()">
+      {{ 'profile.editProfile' | translate }}
+    </button>
+
+    <button
+      *ngIf="isEditMode()"
+      pButton
+      type="button"
+      class="profile-action-btn edit-profile-btn"
+      (click)="cancelEdit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+
+    <button
+      pButton
+      type="button"
+      class="profile-action-btn mobile-signout-btn"
+      (click)="signOut()">
+      {{ 'navigation.logout' | translate }}
+    </button>
+  </div>
+
+  <section class="profile-section">
+    <h3>{{ 'profile.personalInfo' | translate }}</h3>
+
+    <div class="info-grid">
+      <div class="info-field">
+        <label>{{ 'auth.firstName' | translate }}</label>
+        <input
+          *ngIf="isEditMode()"
+          pInputText
+          [ngModel]="user().firstName"
+          (ngModelChange)="updateUserField('firstName', $event)"
+          class="profile-input" />
+        <span *ngIf="!isEditMode()">{{ user().firstName || ('common.notSet' | translate) }}</span>
+      </div>
+
+      <div class="info-field">
+        <label>{{ 'auth.lastName' | translate }}</label>
+        <input
+          *ngIf="isEditMode()"
+          pInputText
+          [ngModel]="user().lastName"
+          (ngModelChange)="updateUserField('lastName', $event)"
+          class="profile-input" />
+        <span *ngIf="!isEditMode()">{{ user().lastName || ('common.notSet' | translate) }}</span>
+      </div>
+
+      <div class="info-field">
+        <label>{{ 'auth.email' | translate }}</label>
+        <input
+          *ngIf="isEditMode()"
+          pInputText
+          [ngModel]="user().email"
+          disabled
+          class="profile-input disabled-input" />
+        <span *ngIf="!isEditMode()">{{ user().email || ('common.notSet' | translate) }}</span>
+      </div>
+
+      <div class="info-field">
+        <label>{{ 'profile.phone' | translate }} <span class="optional-tag" *ngIf="isEditMode()">{{ 'common.optional' | translate }}</span></label>
+        <input
+          *ngIf="isEditMode()"
+          pInputText
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          [ngModel]="user().phone"
+          [placeholder]="phonePlaceholder"
+          (ngModelChange)="updateUserField('phone', $event)"
+          class="profile-input" />
+        <small *ngIf="isEditMode()" class="field-hint">{{ phoneHelperText }}</small>
+        <span *ngIf="!isEditMode()">{{ user().phone || ('common.notSet' | translate) }}</span>
+      </div>
+
+      <div class="info-field">
+        <label>{{ 'profile.dateOfBirth' | translate }} <span class="optional-tag" *ngIf="isEditMode()">{{ 'common.optional' | translate }}</span></label>
+        <input
+          *ngIf="isEditMode()"
+          type="date"
+          [ngModel]="user().birthDate"
+          (ngModelChange)="updateUserField('birthDate', $event)"
+          class="profile-input native-date-input" />
+        <span *ngIf="!isEditMode()">{{ user().birthDate || ('common.notSet' | translate) }}</span>
+      </div>
+
+      <div class="info-field">
+        <label>{{ 'profile.gender' | translate }} <span class="optional-tag" *ngIf="isEditMode()">{{ 'common.optional' | translate }}</span></label>
+        <p-select
+          *ngIf="isEditMode()"
+          [options]="genderOptions()"
+          [ngModel]="user().gender"
+          (ngModelChange)="updateUserField('gender', $event)"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'profile.selectGender' | translate"
+          styleClass="profile-select">
+        </p-select>
+        <span *ngIf="!isEditMode()">{{ displayGender(user().gender) }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="profile-section">
+    <h3>{{ 'profile.preferences' | translate }}</h3>
+
+    <div class="info-grid">
+      <div class="info-field">
+        <label>{{ 'profile.language' | translate }} <span class="optional-tag" *ngIf="isEditMode()">{{ 'common.optional' | translate }}</span></label>
+        <p-select
+          *ngIf="isEditMode()"
+          [options]="languageOptions()"
+          [ngModel]="user().language"
+          (ngModelChange)="updateUserField('language', $event)"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'profile.selectLanguage' | translate"
+          styleClass="profile-select">
+        </p-select>
+        <span *ngIf="!isEditMode()">{{ displayLanguage(user().language) }}</span>
+      </div>
+    </div>
+
+    <div class="notification-row location-row">
+      <div class="notification-text">
+        <label>{{ 'profile.locationOnMap' | translate }}</label>
+        <span>{{ statusLabel(locationEnabled()) }}</span>
+      </div>
+      <p-toggleswitch [ngModel]="locationEnabled()" (ngModelChange)="setLocationEnabled($event)"></p-toggleswitch>
+    </div>
+  </section>
+
+  <section class="profile-section">
+    <h3>{{ 'profile.notifications' | translate }}</h3>
+
+    <div class="notification-row">
+      <div class="notification-text">
+        <label>{{ 'profile.emailNotifications' | translate }}</label>
+        <span>{{ statusLabel(emailNotifications()) }}</span>
+      </div>
+      <p-toggleswitch [ngModel]="emailNotifications()" (ngModelChange)="setEmailNotifications($event)"></p-toggleswitch>
+    </div>
+
+    <div class="notification-row">
+      <div class="notification-text">
+        <label>{{ 'profile.tripReminders' | translate }}</label>
+        <span>{{ statusLabel(tripReminders()) }}</span>
+      </div>
+      <p-toggleswitch [ngModel]="tripReminders()" (ngModelChange)="setTripReminders($event)"></p-toggleswitch>
+    </div>
+
+    <div class="notification-row">
+      <div class="notification-text">
+        <label>{{ 'profile.dealsRecommendations' | translate }}</label>
+        <span>{{ statusLabel(dealsNotifications()) }}</span>
+      </div>
+      <p-toggleswitch [ngModel]="dealsNotifications()" (ngModelChange)="setDealsNotifications($event)"></p-toggleswitch>
+    </div>
+  </section>
+
+  <section class="profile-section security-section">
+    <h3>{{ 'profile.securityPrivacy' | translate }}</h3>
+
+    <div class="security-card">
+      <div>
+        <label>{{ 'auth.password' | translate }}</label>
+        <p>{{ 'profile.passwordHelp' | translate }}</p>
+      </div>
+      <span *ngIf="!isEditMode()" class="password-mask">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+    </div>
+
+    <div *ngIf="isEditMode()" class="password-edit">
+      <input
+        type="password"
+        pInputText
+        [ngModel]="passwordData().oldPassword"
+        (ngModelChange)="updatePasswordField('oldPassword', $event)"
+        [placeholder]="'profile.currentPassword' | translate"
+        class="profile-input" />
+
+      <input
+        type="password"
+        pInputText
+        [ngModel]="passwordData().newPassword"
+        (ngModelChange)="updatePasswordField('newPassword', $event)"
+        [placeholder]="'profile.newPassword' | translate"
+        class="profile-input" />
+
+      <input
+        type="password"
+        pInputText
+        [ngModel]="passwordData().confirmPassword"
+        (ngModelChange)="updatePasswordField('confirmPassword', $event)"
+        [placeholder]="'profile.confirmNewPassword' | translate"
+        class="profile-input" />
+
+      <p class="password-note">{{ 'profile.passwordNote' | translate }}</p>
+    </div>
+
+    <div class="privacy-card">
+      <label>{{ 'profile.privacySettings' | translate }}</label>
+      <span>{{ 'profile.standardPrivacy' | translate }}</span>
+    </div>
+  </section>
+
+  <div *ngIf="isEditMode()" class="profile-actions">
+    <button
+      pButton
+      type="button"
+      class="profile-action-btn save-btn"
+      [disabled]="isSaving()"
+      (click)="saveChanges()">
+      {{ isSaving() ? ('common.saving' | translate) : ('profile.saveChanges' | translate) }}
+    </button>
+  </div>
+</aside>

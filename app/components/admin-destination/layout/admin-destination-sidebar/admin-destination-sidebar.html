@@ -1,0 +1,250 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <span>DA</span>
+    </div>
+    <div class="logo-text">
+      <h2>Destination Admin</h2>
+      <p>Admin Panel</p>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <span class="nav-section-label">Destination</span>
+
+    @for (link of links; track link.path) {
+      <button
+        type="button"
+        class="nav-link"
+        [class.active-link]="isActive(link.path)"
+        (click)="navigate(link.path)"
+        [title]="isCollapsed ? link.label : ''"
+      >
+        <i [class]="link.icon"></i>
+        <span>{{ link.label }}</span>
+      </button>
+    }
+  </nav>
+
+  <!-- Bottom -->
+  <div class="sidebar-bottom">
+
+    <!-- Collapse toggle -->
+    <button class="collapse-btn" (click)="toggleCollapse()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           [class.rotated]="isCollapsed">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+      <span>Collapse</span>
+    </button>
+
+    <!-- User info -->
+    <button class="sidebar-user" type="button" (click)="openProfileModal()" aria-label="Open profile">
+      <div class="user-avatar">
+        <img *ngIf="profile().avatarUrl; else adminInitials" [src]="profile().avatarUrl!" alt="Profile" class="avatar-img" />
+        <ng-template #adminInitials>{{ avatarInitials() }}</ng-template>
+      </div>
+      <div class="user-info">
+        <p>{{ displayName() }}</p>
+        <small>{{ profile().email }}</small>
+      </div>
+    </button>
+
+    <!-- Sign out -->
+    <button class="logout-btn" (click)="logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      <span>Sign out</span>
+    </button>
+
+  </div>
+
+</aside>
+
+<div class="profile-modal-backdrop" *ngIf="isProfileModalOpen()" (click)="closeProfileModal()"></div>
+
+<section class="profile-modal" *ngIf="isProfileModalOpen()" (click)="$event.stopPropagation()">
+
+  <!-- Header -->
+  <div class="profile-modal-header">
+    <div class="profile-modal-avatar-wrapper">
+      <input
+        #avatarInput
+        type="file"
+        accept="image/*"
+        class="avatar-file-input"
+        (change)="onAvatarFileChange($event)"
+        aria-label="Upload profile picture"
+      />
+      <button
+        type="button"
+        class="profile-modal-avatar"
+        (click)="avatarInput.click()"
+        aria-label="Change profile picture"
+      >
+        <img
+          *ngIf="avatarPreview()"
+          [src]="avatarPreview()"
+          class="avatar-img"
+          alt="Profile"
+        />
+        <span *ngIf="!avatarPreview()">{{ avatarInitials() }}</span>
+      </button>
+      <button
+        type="button"
+        class="avatar-camera-btn"
+        (click)="avatarInput.click()"
+        aria-label="Upload profile picture"
+      >
+        <span class="material-icons">photo_camera</span>
+      </button>
+    </div>
+    <div class="profile-modal-title">
+      <h2>{{ displayName() }}</h2>
+      <span class="role-badge">{{ roleLabel() }}</span>
+      <button
+        *ngIf="avatarPreview()"
+        type="button"
+        class="avatar-remove-btn"
+        (click)="removeAvatar()"
+        aria-label="Remove profile picture">
+        Remove
+      </button>
+    </div>
+    <button
+      class="profile-modal-close"
+      type="button"
+      (click)="closeProfileModal()"
+      aria-label="Close profile">
+      &times;
+    </button>
+  </div>
+
+  <!-- Personal Information -->
+  <div class="profile-edit-section">
+    <p class="section-label">PERSONAL INFORMATION</p>
+
+    <div class="profile-info-grid">
+      <div class="profile-edit-item">
+        <label for="firstName">First name</label>
+        <input
+          id="firstName"
+          type="text"
+          autocomplete="given-name"
+          [ngModel]="profileEditData().firstName"
+          (ngModelChange)="updateProfileField('firstName', $event)"
+          name="firstName"
+          placeholder="First name"
+        />
+      </div>
+      <div class="profile-edit-item">
+        <label for="lastName">Last name</label>
+        <input
+          id="lastName"
+          type="text"
+          autocomplete="family-name"
+          [ngModel]="profileEditData().lastName"
+          (ngModelChange)="updateProfileField('lastName', $event)"
+          name="lastName"
+          placeholder="Last name"
+        />
+      </div>
+      <div class="profile-edit-item profile-edit-wide">
+        <label for="emailField">Email address</label>
+        <input
+          id="emailField"
+          type="email"
+          autocomplete="email"
+          [ngModel]="profileEditData().email"
+          (ngModelChange)="updateProfileField('email', $event)"
+          name="emailField"
+          placeholder="Email address"
+        />
+      </div>
+    </div>
+
+    <div class="section-actions">
+      <button class="btn-save" type="button" (click)="saveProfile()"
+        [disabled]="isSavingProfile() || !hasProfileChanges()">
+        {{ isSavingProfile() ? 'Saving...' : 'Save changes' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Change Password -->
+  <form class="password-form" (ngSubmit)="changePassword()">
+    <p class="section-label">CHANGE PASSWORD</p>
+    <p class="section-subtitle">Confirm your current password before setting a new one.</p>
+
+    <div class="profile-edit-item">
+      <label for="currentPassword">Current password</label>
+      <div class="password-field-wrapper">
+        <input
+          id="currentPassword"
+          [type]="showOldPassword() ? 'text' : 'password'"
+          autocomplete="current-password"
+          [ngModel]="passwordData().oldPassword"
+          (ngModelChange)="updatePasswordField('oldPassword', $event)"
+          name="currentPassword"
+        />
+        <button type="button" class="toggle-password-btn"
+          (click)="togglePasswordVisibility('oldPassword')"
+          [attr.aria-label]="showOldPassword() ? 'Hide current password' : 'Show current password'">
+          <span class="material-icons">{{ showOldPassword() ? 'visibility_off' : 'visibility' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-edit-item">
+      <label for="newPassword">New password</label>
+      <div class="password-field-wrapper">
+        <input
+          id="newPassword"
+          [type]="showNewPassword() ? 'text' : 'password'"
+          autocomplete="new-password"
+          [ngModel]="passwordData().newPassword"
+          (ngModelChange)="updatePasswordField('newPassword', $event)"
+          name="newPassword"
+        />
+        <button type="button" class="toggle-password-btn"
+          (click)="togglePasswordVisibility('newPassword')"
+          [attr.aria-label]="showNewPassword() ? 'Hide new password' : 'Show new password'">
+          <span class="material-icons">{{ showNewPassword() ? 'visibility_off' : 'visibility' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-edit-item">
+      <label for="confirmPassword">Confirm new password</label>
+      <div class="password-field-wrapper">
+        <input
+          id="confirmPassword"
+          [type]="showConfirmPassword() ? 'text' : 'password'"
+          autocomplete="new-password"
+          [ngModel]="passwordData().confirmPassword"
+          (ngModelChange)="updatePasswordField('confirmPassword', $event)"
+          name="confirmPassword"
+        />
+        <button type="button" class="toggle-password-btn"
+          (click)="togglePasswordVisibility('confirmPassword')"
+          [attr.aria-label]="showConfirmPassword() ? 'Hide confirmation password' : 'Show confirmation password'">
+          <span class="material-icons">{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section-actions">
+      <button class="btn-save" type="submit"
+        [disabled]="isSavingPassword() || !hasPasswordChanges()">
+        {{ isSavingPassword() ? 'Saving...' : 'Update password' }}
+      </button>
+    </div>
+  </form>
+
+</section>

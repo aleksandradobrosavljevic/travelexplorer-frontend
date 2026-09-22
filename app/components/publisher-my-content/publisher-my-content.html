@@ -1,0 +1,152 @@
+<app-publisher-header></app-publisher-header>
+
+<div class="publisher-page">
+  <main class="content-wrapper">
+
+    <div class="page-header">
+      <div>
+        <h1>{{ 'publisher.myContent.title' | translate }}</h1>
+        <p>{{ 'publisher.myContent.subtitle' | translate: { type: contentTypeLabel(true) } }}</p>
+      </div>
+      <button class="add-button" routerLink="/publisher-add-new-content">
+        + {{ 'publisher.myContent.addNewContent' | translate }}
+      </button>
+    </div>
+
+    <div class="table-card">
+
+      <div class="filters-row">
+        <div class="filters-row-top">
+          <span class="filters-label">{{ 'publisher.map.filters' | translate }}</span>
+          <button class="reset-filters-btn" (click)="resetFilters()">&#8634; {{ 'common.clearAll' | translate }}</button>
+        </div>
+
+        <div class="filters-row-bottom">
+          <div class="filter-group search-group">
+            <label for="search">{{ 'common.search' | translate }}</label>
+            <input
+              id="search"
+              type="text"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+              [placeholder]="'publisher.myContent.searchPlaceholder' | translate"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label>{{ 'publisher.myContent.type' | translate }}</label>
+            <p-select
+              [options]="typeSelectOptions()"
+              [ngModel]="typeFilter()"
+              (ngModelChange)="typeFilter.set($event)"
+              styleClass="w-full">
+            </p-select>
+          </div>
+
+          <div class="filter-group">
+            <label>{{ 'publisher.myContent.status' | translate }}</label>
+            <p-select
+              [options]="statusOptions()"
+              [ngModel]="statusFilter()"
+              (ngModelChange)="statusFilter.set($event)"
+              styleClass="w-full">
+            </p-select>
+          </div>
+
+          <div class="filter-group">
+            <label>{{ 'sort.label' | translate }}</label>
+            <p-select
+              [options]="sortOptions()"
+              [ngModel]="sortFilter()"
+              (ngModelChange)="sortFilter.set($event)"
+              styleClass="w-full">
+            </p-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'publisher.myContent.table.title' | translate }}</th>
+              <th>{{ 'publisher.myContent.table.status' | translate }}</th>
+              <th>{{ 'publisher.myContent.table.type' | translate }}</th>
+              <th>{{ 'publisher.myContent.table.lastUpdated' | translate }}</th>
+              <th>{{ 'publisher.myContent.table.actions' | translate }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let item of filteredItems()" class="clickable-row" (click)="onView(item)">
+              <td>
+                <div>{{ item.title }}</div>
+                <div
+                  *ngIf="item.status === 'Rejected' && item.rejectionReason"
+                  style="margin-top: 4px; font-size: 11px; color: #dc2626; background: #fff1f1; border: 1px solid #fecaca; border-radius: 6px; padding: 3px 8px; display: inline-block;">
+                  &times; {{ item.rejectionReason }}
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+                  {{ statusLabel(item.status) }}
+                </span>
+              </td>
+              <td>
+                <span class="type-badge">
+                  {{ getTypeName(item) }}
+                </span>
+              </td>
+              <td>{{ formatDate(item.updatedAt) }}</td>
+              <td class="actions" (click)="$event.stopPropagation()">
+                <button class="map-btn" (click)="onShowOnMap(item)" [disabled]="item.status !== 'Approved'" [title]="'details.showOnMap' | translate">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </button>
+                <button class="edit-btn" (click)="onEdit(item)" [title]="'common.edit' | translate">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="delete-btn" (click)="onDelete(item)" [title]="'common.delete' | translate">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="filteredItems().length === 0 && !isLoading()">
+              <td colspan="5" class="empty-state">
+                {{ 'publisher.myContent.noContentFound' | translate: { type: contentTypeLabel(true) } }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-icon">&#128465;</div>
+          <h3 class="modal-title">{{ 'publisher.myContent.deleteTitle' | translate }}</h3>
+          <p class="modal-message">
+            {{ 'publisher.myContent.deleteQuestion' | translate }}
+            <strong>{{ itemToDelete()?.title }}</strong>?
+            {{ 'publisher.myContent.deleteCannotUndo' | translate }}
+          </p>
+          <div class="modal-actions">
+            <button class="modal-btn cancel" (click)="closeDeleteModal()">{{ 'common.cancel' | translate }}</button>
+            <button class="modal-btn confirm" (click)="confirmDelete()">{{ 'publisher.myContent.confirmDelete' | translate }}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="load-more-indicator" *ngIf="isLoadingMore()">
+        {{ 'publisher.myContent.loadingMore' | translate }}
+      </div>
+      @if (hasMore() && !isLoading() && !isLoadingMore()) {
+        <div class="load-more-container">
+          <button class="load-more-btn" (click)="loadMore()">
+            {{ 'publisher.myContent.loadMore' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+
+  </main>
+</div>

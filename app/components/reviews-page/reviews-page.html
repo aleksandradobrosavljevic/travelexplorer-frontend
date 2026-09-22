@@ -1,0 +1,227 @@
+<div class="reviews-page">
+  <app-header mode="full"></app-header>
+
+  <main class="reviews-shell">
+    <a class="back-link" [routerLink]="['/details', entityType().toLowerCase(), entityId()]">&larr; {{ 'reviews.backToDetails' | translate }}</a>
+
+    <section class="reviews-hero">
+      <p class="eyebrow">{{ 'reviews.eyebrow' | translate }}</p>
+      <h1>{{ itemTitle() }}</h1>
+
+      <div class="summary-row">
+        <span class="rating-pill">
+          <span class="star-symbol">★</span>
+          {{ averageRating() | number:'1.2-2' }}
+        </span>
+        <span>{{ totalReviews() }} {{ reviewsLabel(totalReviews()) }}</span>
+        <span *ngIf="itemLocation()">{{ itemLocation() }}</span>
+      </div>
+    </section>
+
+    <section class="leave-review-panel" *ngIf="!isLoading() && !errorMessage() && currentUserId() && !currentUserHasHiddenReview() && (!ownReview || editingReview())">
+      <div class="leave-review-heading">
+        <div>
+          <p>{{ editingReview() ? ('reviews.editReview' | translate) : ('reviews.leaveReview' | translate) }}</p>
+          <h2>{{ editingReview() ? ('reviews.updateYourReview' | translate) : ('reviews.shareExperience' | translate) }}</h2>
+        </div>
+        <button
+          *ngIf="editingReview()"
+          class="cancel-edit-btn"
+          type="button"
+          (click)="cancelEditingReview()">
+          {{ 'common.cancel' | translate }}
+        </button>
+      </div>
+
+      <form class="review-form" (ngSubmit)="submitReview()">
+        <div class="interactive-stars" (mouseleave)="setReviewHoverRating(0)">
+          <button
+            *ngFor="let star of reviewStars"
+            type="button"
+            class="interactive-star"
+            [class.active]="isReviewStarActive(star)"
+            (mouseenter)="setReviewHoverRating(star)"
+            (focus)="setReviewHoverRating(star)"
+            (blur)="setReviewHoverRating(0)"
+            (click)="setReviewRating(star)"
+            [attr.aria-label]="starRatingLabel(star)">
+            &#9733;
+          </button>
+          <span class="rating-label" *ngIf="reviewRating()">{{ reviewRating() }}/5</span>
+        </div>
+
+        <label class="review-comment-label" for="reviewComment">{{ 'reviews.yourReview' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+        <textarea
+          id="reviewComment"
+          rows="5"
+          maxlength="500"
+          name="reviewComment"
+          [ngModel]="reviewComment()"
+          (ngModelChange)="reviewComment.set($event)"
+          [placeholder]="'reviews.commentPlaceholder' | translate">
+        </textarea>
+
+        <div class="review-form-footer">
+          <div>
+            <p class="review-message" *ngIf="reviewMessage()">{{ reviewMessage() }}</p>
+            <p class="review-error" *ngIf="reviewError()">{{ reviewError() }}</p>
+          </div>
+
+          <div class="review-actions">
+            <button
+              *ngIf="editingReview()"
+              class="delete-review-btn"
+              type="button"
+              [disabled]="isReviewDeleting() || isReviewSaving()"
+              (click)="deleteReview()">
+              {{ isReviewDeleting() ? ('common.deleting' | translate) : ('reviews.deleteReview' | translate) }}
+            </button>
+
+            <button
+              class="submit-review-btn"
+              type="submit"
+              [disabled]="isReviewSaving() || isReviewDeleting()">
+              {{ isReviewSaving() ? ('common.saving' | translate) : (editingReview() ? ('profile.saveChanges' | translate) : ('reviews.postReview' | translate)) }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <div class="own-review-note" *ngIf="!isLoading() && !errorMessage() && currentUserId() && ownReview && !editingReview()">
+      {{ 'reviews.ownReviewNote' | translate }}
+    </div>
+
+    <div class="own-review-note hidden-review-note" *ngIf="!isLoading() && !errorMessage() && currentUserId() && currentUserHasHiddenReview()">
+      {{ 'reviews.hiddenOwnReviewNote' | translate }}
+    </div>
+
+    <section class="signin-review-panel" *ngIf="!isLoading() && !errorMessage() && !currentUserId()">
+      <span>{{ 'reviews.signInPrompt' | translate }}</span>
+      <button type="button" (click)="signInToReview()">{{ 'navigation.login' | translate }}</button>
+    </section>
+
+    <section class="reviews-controls" *ngIf="!isLoading() && !errorMessage() && (totalReviews() > 0 || selectedRatingFilter() !== null)">
+      <label>
+        <span>{{ 'reviews.filterByStars' | translate }}</span>
+        <p-select
+          [options]="ratingFilterOptions"
+          [ngModel]="selectedRatingFilter()"
+          (ngModelChange)="setRatingFilter($event)"
+          optionValue="value">
+          <ng-template #selectedItem let-option>
+            {{ option.number !== null ? option.number + ' ' : '' }}{{ option.labelKey | translate }}
+          </ng-template>
+          <ng-template #item let-option>
+            {{ option.number !== null ? option.number + ' ' : '' }}{{ option.labelKey | translate }}
+          </ng-template>
+        </p-select>
+      </label>
+
+      <label>
+        <span>{{ 'sort.label' | translate }}</span>
+        <p-select
+          [options]="reviewSortOptions"
+          [ngModel]="reviewSort()"
+          (ngModelChange)="setReviewSort($event)"
+          optionLabel="labelKey"
+          optionValue="value">
+          <ng-template #selectedItem let-option>
+            {{ option.labelKey | translate }}
+          </ng-template>
+          <ng-template #item let-option>
+            {{ option.labelKey | translate }}
+          </ng-template>
+        </p-select>
+      </label>
+    </section>
+
+    <section class="reviews-panel">
+      <div class="state-card" *ngIf="isLoading()">
+        <h2>{{ 'reviews.loadingTitle' | translate }}</h2>
+        <p>{{ 'reviews.loadingText' | translate }}</p>
+      </div>
+
+      <div class="state-card error" *ngIf="!isLoading() && errorMessage()">
+        <h2>{{ errorMessage() }}</h2>
+        <p>{{ 'reviews.tryDetailsAgain' | translate }}</p>
+      </div>
+
+      <div class="state-card" *ngIf="!isLoading() && !errorMessage() && selectedRatingFilter() === null && reviews().length === 0">
+        <h2>{{ 'reviews.noReviewsTitle' | translate }}</h2>
+        <p>{{ 'reviews.noReviewsText' | translate }}</p>
+      </div>
+
+      <div class="state-card" *ngIf="!isLoading() && !errorMessage() && selectedRatingFilter() !== null && reviews().length === 0">
+        <h2>{{ 'reviews.noFilteredReviewsTitle' | translate }}</h2>
+        <p>{{ 'reviews.noFilteredReviewsText' | translate }}</p>
+      </div>
+
+      <article class="review-card" *ngFor="let review of visibleReviews()">
+        <img
+          *ngIf="review.avatarUrl; else reviewInitials"
+          class="review-avatar review-avatar--image"
+          [src]="review.avatarUrl"
+          [alt]="review.author"
+        />
+        <ng-template #reviewInitials>
+          <div class="review-avatar">{{ review.initials }}</div>
+        </ng-template>
+
+        <div class="review-body">
+          <div class="review-topline">
+            <div>
+              <h2>{{ review.author }}</h2>
+              <p>{{ review.date }}</p>
+            </div>
+
+            <div class="review-stars" [attr.aria-label]="outOfStarsLabel(review.rating)">
+              <span
+                *ngFor="let star of [1,2,3,4,5]"
+                class="review-star"
+                [class.active]="isStarFilled(review.rating, star)"
+              >
+                ★
+              </span>
+            </div>
+          </div>
+
+          <p class="review-comment">{{ review.comment }}</p>
+
+          <div class="review-card-actions">
+            <button
+              *ngIf="canReportReview(review)"
+              class="report-review-btn"
+              type="button"
+              [disabled]="isReportingReview(review.id)"
+              (click)="reportReview(review)">
+              {{ isReportingReview(review.id) ? ('common.saving' | translate) : ('reviews.reportReview' | translate) }}
+            </button>
+
+            <span *ngIf="isReviewReported(review)" class="reported-review-badge">
+              <span aria-hidden="true">✓</span>
+              {{ 'reviews.reportedBadge' | translate }}
+            </span>
+          </div>
+
+          <button
+            *ngIf="review.touristUserId === currentUserId() && !currentUserHasHiddenReview()"
+            class="edit-review-btn"
+            type="button"
+            (click)="startEditingReview(review)">
+            {{ 'common.edit' | translate }}
+          </button>
+        </div>
+      </article>
+
+      <button
+        *ngIf="canShowMoreReviews()"
+        class="show-more-reviews-btn"
+        type="button"
+        (click)="showMoreReviews()">
+        {{ 'reviews.showMore' | translate }}
+      </button>
+
+    </section>
+  </main>
+</div>

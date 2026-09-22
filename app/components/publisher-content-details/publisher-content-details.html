@@ -1,0 +1,262 @@
+<app-publisher-header></app-publisher-header>
+
+<div class="details-page" *ngIf="!isLoading(); else loading">
+  <ng-container *ngIf="item(); else notFound">
+    <div class="page-container">
+
+      <!-- Nav bar -->
+      <div class="nav-bar">
+        <button class="btn-action" (click)="goBack()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back
+        </button>
+        <div class="nav-right">
+          <span class="status-pill" [ngClass]="getStatusClass(item()!.status)">
+            {{ getStatusIcon(item()!.status) }} {{ item()!.status }}
+          </span>
+          <button class="btn-action btn-map" (click)="showOnMap()"
+            *ngIf="item()!.latitude && item()!.longitude && item()!.status === 'Approved'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Show on map
+          </button>
+          <button class="btn-action" (click)="goToEdit()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </button>
+        </div>
+      </div>
+
+      <!-- Slika + info -->
+      <div class="top-section">
+        <div class="image-col">
+          <div class="slideshow" *ngIf="getImages().length > 0; else noImage">
+            <img [src]="getImages()[currentImageIndex()]" [alt]="item()!.title" class="main-image" />
+            <button class="slide-btn slide-prev" *ngIf="getImages().length > 1" (click)="prevImage()">‹</button>
+            <button class="slide-btn slide-next" *ngIf="getImages().length > 1" (click)="nextImage()">›</button>
+            <div class="slide-dots" *ngIf="getImages().length > 1">
+              <span *ngFor="let img of getImages(); let i = index"
+                    class="dot" [class.active]="i === currentImageIndex()"
+                    (click)="goToImage(i)">
+              </span>
+            </div>
+          </div>
+          <ng-template #noImage>
+            <div class="image-placeholder">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>No image yet</span>
+            </div>
+          </ng-template>
+          <div class="image-badges">
+            <span class="badge-type">
+              <span class="badge-type-icon" [innerHTML]="getTypeIconSvg(item()!.type)"></span>
+              {{ item()!.type }}
+            </span>
+            <span class="badge-subtype" *ngIf="item()!.objectTypeName || item()!.activityTypeName || item()!.eventTypeName">
+              {{ item()!.objectTypeName || item()!.activityTypeName || item()!.eventTypeName }}
+            </span>
+          </div>
+        </div>
+
+        <div class="info-col">
+          <h1 class="content-title">{{ item()!.title }}</h1>
+          <p class="content-location" *ngIf="item()!.location">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ item()!.location }}
+          </p>
+          <p class="content-location" *ngIf="item()!.type === 'Event' && item()!.objectName && !item()!.location">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            {{ item()!.objectName }}
+          </p>
+
+          <div class="divider"></div>
+
+          <!-- OBJECT fields -->
+          <ng-container *ngIf="item()!.type === 'Object'">
+            <div class="info-grid">
+              <div class="info-item" *ngIf="item()!.objectTypeName">
+                <span class="il">Category</span>
+                <span class="iv">{{ item()!.objectTypeName }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.phone">
+                <span class="il">Phone</span>
+                <span class="iv">{{ item()!.phone }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.website">
+                <span class="il">Website</span>
+                <a [href]="item()!.website" target="_blank" class="iv iv-link">{{ item()!.website }}</a>
+              </div>
+              <div class="info-item">
+                <span class="il">Created</span>
+                <span class="iv">{{ formatDate(item()!.createdAt) }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.approvedAt">
+                <span class="il">Approved</span>
+                <span class="iv">{{ formatDate(item()!.approvedAt!) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="il">Last Updated</span>
+                <span class="iv">{{ formatDate(item()!.updatedAt) }}</span>
+              </div>
+            </div>
+           
+          </ng-container>
+
+          <!-- ACTIVITY fields -->
+          <ng-container *ngIf="item()!.type === 'Activity'">
+            <div class="info-grid">
+              <div class="info-item" *ngIf="item()!.activityTypeName">
+                <span class="il">Category</span>
+                <span class="iv">{{ item()!.activityTypeName }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.durationMinutes">
+                <span class="il">Duration</span>
+                <span class="iv">{{ formatDuration(item()!.durationMinutes!) }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.price !== null">
+                <span class="il">Price</span>
+                <span class="iv">{{ item()!.price === 0 ? 'Free' : item()!.price!.toLocaleString() + ' ' + item()!.currency + ' / person' }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.destinationName">
+                <span class="il">Destination</span>
+                <span class="iv">{{ item()!.destinationName }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.objectName">
+                <span class="il">Related Object</span>
+                <span class="iv">{{ item()!.objectName }}</span>
+              </div>
+              <div class="info-item">
+                <span class="il">Created</span>
+                <span class="iv">{{ formatDate(item()!.createdAt) }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.approvedAt">
+                <span class="il">Approved</span>
+                <span class="iv">{{ formatDate(item()!.approvedAt!) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="il">Last Updated</span>
+                <span class="iv">{{ formatDate(item()!.updatedAt) }}</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <div class="booking-row" *ngIf="(item()!.type === 'Object' || item()!.type === 'Activity') && (item()!.airbnbLink || item()!.bookingLink)">
+            <a *ngIf="item()!.airbnbLink" [href]="item()!.airbnbLink" target="_blank" class="booking-btn airbnb">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.148c-.89 0-1.743.587-2.36 1.37C8.455 5.04 6.5 8.37 6.5 11.25c0 3.038 2.462 5.25 5.5 5.25s5.5-2.212 5.5-5.25c0-2.88-1.955-6.21-3.14-7.732C13.743 2.735 12.89 2.148 12 2.148zm0 1.5c.43 0 .93.31 1.45.97C14.6 5.9 16.5 8.97 16.5 11.25c0 2.21-1.79 3.75-4.5 3.75s-4.5-1.54-4.5-3.75c0-2.28 1.9-5.35 3.05-6.632.52-.66 1.02-.97 1.45-.97zm0 14.25c-3.5 0-6.375 1.01-6.375 2.25S8.5 22.5 12 22.5s6.375-1.01 6.375-2.252S15.5 17.898 12 17.898zm0 1.5c2.9 0 4.875.77 4.875 1.5S14.9 21 12 21s-4.875-.77-4.875-1.5 1.975-1.5 4.875-1.5z"/></svg>
+              Airbnb
+            </a>
+            <a *ngIf="item()!.bookingLink" [href]="item()!.bookingLink" target="_blank" class="booking-btn booking">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h4.5C12.43 3 14 4.57 14 6.5c0 1.08-.5 2.04-1.28 2.67C13.9 9.7 15 11.0 15 12.6 15 14.8 13.2 16.5 11 16.5H6V3zm2 2v3.5h2.5c.83 0 1.5-.67 1.5-1.5v-.5c0-.83-.67-1.5-1.5-1.5H8zm0 5.5V14.5h3c.83 0 1.5-.67 1.5-1.5v-.5c0-.83-.67-1.5-1.5-1.5H8zM17 3h2v13.5h-2V3z"/></svg>
+              Booking.com
+            </a>
+          </div>
+
+          <!-- EVENT fields -->
+          <ng-container *ngIf="item()!.type === 'Event'">
+            <div class="info-grid">
+              <div class="info-item" *ngIf="item()!.eventTypeName">
+                <span class="il">Category</span>
+                <span class="iv">{{ item()!.eventTypeName }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.objectName">
+                <span class="il">Venue</span>
+                <span class="iv">{{ item()!.objectName }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.startDateTime">
+                <span class="il">Start</span>
+                <span class="iv">{{ formatDateTime(item()!.startDateTime) }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.endDateTime">
+                <span class="il">End</span>
+                <span class="iv">{{ formatDateTime(item()!.endDateTime!) }}</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.capacity">
+                <span class="il">Capacity</span>
+                <span class="iv">{{ item()!.capacity!.toLocaleString() }} people</span>
+              </div>
+              <div class="info-item" *ngIf="item()!.price !== null">
+                <span class="il">Price</span>
+                <span class="iv">{{ item()!.price === 0 ? 'Free' : item()!.price!.toLocaleString() + ' ' + item()!.currency + ' / person' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="il">Created</span>
+                <span class="iv">{{ formatDate(item()!.createdAt) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="il">Last Updated</span>
+                <span class="iv">{{ formatDate(item()!.updatedAt) }}</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Pending/Rejected -->
+          <div class="status-box pending" *ngIf="item()!.status === 'Pending Approval'">
+            ⏳ Your content is currently under review.
+          </div>
+          <div class="status-box rejected" *ngIf="item()!.status === 'Rejected' && item()!.rejectionReason">
+            ⚠️ {{ item()!.rejectionReason }}
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- About -->
+      <div class="section">
+        <h3 class="section-title">About this {{ item()!.type | lowercase }}</h3>
+        <p class="desc-text" *ngIf="item()!.description">{{ item()!.description }}</p>
+        <p class="no-data" *ngIf="!item()!.description">No description provided.</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Reviews -->
+      <div class="reviews-section">
+        <div class="reviews-header">
+          <div class="reviews-header-left">
+            <h3 class="section-title" style="margin:0">Reviews</h3>
+            <ng-container *ngIf="reviews().length > 0">
+              <span class="reviews-avg">★ {{ getAverageRating().toFixed(1) }}</span>
+              <span class="reviews-count">· {{ reviews().length }} shown</span>
+            </ng-container>
+          </div>
+          <a class="view-all-link" (click)="goToReviews()">
+            View all →
+          </a>
+        </div>
+
+        <div *ngIf="reviews().length === 0" class="no-data">No reviews yet.</div>
+
+        <div class="reviews-list" *ngIf="reviews().length > 0">
+          <div class="review-item" *ngFor="let review of reviews()">
+            <div class="review-top">
+              <div class="reviewer-avatar">{{ review.touristFirstName[0] }}{{ review.touristLastName[0] }}</div>
+              <div>
+                <div class="reviewer-name">{{ review.touristFirstName }} {{ review.touristLastName }}</div>
+                <div class="review-date">{{ formatDate(review.createdAt) }}</div>
+              </div>
+              <div class="review-stars">
+                <span *ngFor="let s of [1,2,3,4,5]" [class.filled]="s <= review.rating">★</span>
+              </div>
+            </div>
+            <p class="review-comment" *ngIf="review.comment">{{ review.comment }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <ng-template #notFound>
+    <div class="state-center">
+      <p>Content not found.</p>
+      <button class="btn-action" (click)="goBack()">← Back</button>
+    </div>
+  </ng-template>
+</div>
+
+<ng-template #loading>
+  <div class="state-center">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+</ng-template>

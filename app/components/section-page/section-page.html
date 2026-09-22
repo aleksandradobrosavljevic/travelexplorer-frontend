@@ -1,0 +1,116 @@
+<div class="section-page">
+  <app-header mode="full"></app-header>
+
+  <div class="top-bar">
+    <a
+      routerLink="/"
+      [queryParams]="buildDashboardReturnQueryParams()"
+      class="back-link">
+      <span aria-hidden="true">&larr;</span> {{ 'common.backToDashboard' | translate }}
+    </a>
+  </div>
+
+  <section class="page-hero">
+    <h1>{{ getPageTitle() }}</h1>
+    <p>{{ 'section.subtitle' | translate }}</p>
+  </section>
+
+  <section class="section-filters" *ngIf="supportsSectionFilters">
+    <label class="section-filter-field">
+      <span>{{ 'common.search' | translate }}</span>
+      <input
+        type="text"
+        [placeholder]="'common.searchByName' | translate"
+        [ngModel]="currentSearchValue"
+        (ngModelChange)="onSearchChanged($event)"
+      />
+    </label>
+
+    <label class="section-filter-field" *ngIf="typeOptions.length > 0">
+      <span>{{ typeFilterLabel }}</span>
+      <p-select
+        [options]="typeSelectOptions"
+        [ngModel]="typeFilterId"
+        (ngModelChange)="onTypeFilterChanged($event)"
+        optionLabel="label"
+        optionValue="value">
+        <ng-template #selectedItem let-option>
+          {{ option.translate ? (option.label | translate) : option.label }}
+        </ng-template>
+        <ng-template #item let-option>
+          {{ option.translate ? (option.label | translate) : option.label }}
+        </ng-template>
+      </p-select>
+    </label>
+
+    <label class="section-filter-field" *ngIf="sectionType === 'events'">
+      <span>{{ 'dashboard.events' | translate }}</span>
+      <p-select
+        [options]="eventTimeOptions"
+        [ngModel]="eventTimeFilter"
+        (ngModelChange)="onEventTimeFilterChanged($event)"
+        optionLabel="labelKey"
+        optionValue="value">
+        <ng-template #selectedItem let-option>
+          {{ option.labelKey | translate }}
+        </ng-template>
+        <ng-template #item let-option>
+          {{ option.labelKey | translate }}
+        </ng-template>
+      </p-select>
+    </label>
+
+    <label class="section-filter-field">
+      <span>{{ 'sort.label' | translate }}</span>
+      <p-select
+        [options]="availableSortOptions"
+        [ngModel]="currentSortOption"
+        (ngModelChange)="onSortChanged($event)"
+        optionLabel="labelKey"
+        optionValue="value">
+        <ng-template #selectedItem let-option>
+          {{ option.labelKey | translate }}
+        </ng-template>
+        <ng-template #item let-option>
+          {{ option.labelKey | translate }}
+        </ng-template>
+      </p-select>
+    </label>
+  </section>
+
+  <div *ngIf="isLoading" class="empty-state loading-state">
+    <h2>{{ 'common.loading' | translate }}</h2>
+    <p>{{ 'section.loadingHint' | translate }}</p>
+  </div>
+
+  <div *ngIf="hasNoResults" class="empty-state">
+    <h2>{{ 'common.noResults' | translate }}</h2>
+    <p>{{ 'section.noResultsHint' | translate }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && filteredItems.length > 0" class="card-grid">
+    <app-preview-card
+      *ngFor="let item of pagedItems; trackBy: trackByCard"
+      [id]="item.id"
+      [entityType]="item.entityType"
+      [image]="item.image"
+      [title]="item.title"
+      [location]="item.location"
+      [rating]="item.rating"
+      [price]="displayCardPrice(item)"
+      [isFavorite]="item.isFavorite"
+      (favoriteToggled)="onFavoriteToggled($event)"
+      (cardSelected)="onCardSelected($event)">
+    </app-preview-card>
+  </div>
+
+  <div class="pagination-controls" *ngIf="!isLoading && totalItems > pageSize">
+    <button class="pagination-btn" type="button" [disabled]="currentPage === 1" (click)="changePage(-1)">
+      {{ 'common.previous' | translate }}
+    </button>
+    <span class="pagination-status">{{ 'common.pageOf' | translate: { page: currentPage, total: totalPages } }}</span>
+    <button class="pagination-btn" type="button" [disabled]="currentPage === totalPages" (click)="changePage(1)">
+      {{ 'common.next' | translate }}
+    </button>
+  </div>
+</div>

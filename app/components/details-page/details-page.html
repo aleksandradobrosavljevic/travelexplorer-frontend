@@ -1,0 +1,369 @@
+<div class="details-page">
+  <app-header mode="full"></app-header>
+
+  <div class="details-container" *ngIf="!isLoading() && item() as item; else loadingOrNotFound">
+    <div class="top-bar">
+      <a href="" class="back-link" (click)="goBack($event)">&larr; {{ backLinkText | translate }}</a>
+    </div>
+
+    <div class="details-card">
+      <div
+        class="hero-image-wrapper"
+        (pointerdown)="onGalleryPointerDown($event)"
+        (pointerup)="onGalleryPointerUp($event)"
+        (pointercancel)="onGalleryPointerCancel()"
+        (pointerleave)="onGalleryPointerCancel()"
+      >
+        <img
+          [src]="activeImage(item)"
+          [alt]="item.title"
+          class="details-image"
+          loading="lazy"
+        />
+
+        <button
+          *ngIf="item.images.length > 1"
+          class="image-nav image-nav-prev"
+          type="button"
+          aria-label="Previous image"
+          (click)="previousImage($event)"
+        >
+          &lt;
+        </button>
+
+        <button
+          *ngIf="item.images.length > 1"
+          class="image-nav image-nav-next"
+          type="button"
+          aria-label="Next image"
+          (click)="nextImage($event)"
+        >
+          &gt;
+        </button>
+
+        <div class="image-dots" *ngIf="item.images.length > 1">
+          <button
+            *ngFor="let image of item.images; let index = index"
+            type="button"
+            class="dot"
+            [class.active]="index === activeImageIndex()"
+            [attr.aria-label]="'Show image ' + (index + 1)"
+            (click)="selectImage(index, $event)"
+          ></button>
+        </div>
+      </div>
+
+      <div class="details-content">
+        <div class="title-price-row">
+          <div class="title-left">
+            <h1>{{ item.title }}</h1>
+
+            <div class="meta-line">
+              <div class="rating-inline">
+                <svg class="small-star" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 3.8L14.47 8.81L20 9.62L16 13.52L16.94 19.02L12 16.42L7.06 19.02L8 13.52L4 9.62L9.53 8.81L12 3.8Z"
+                    fill="#8FA16E"
+                    stroke="#8FA16E"
+                    stroke-width="1.2"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>{{ item.rating | number:'1.2-2' }}</span>
+                <span class="review-count">({{ item.reviewCount }})</span>
+              </div>
+
+              <div class="location-inline">
+                <svg class="location-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 21C12 21 18 15.4 18 10.5C18 7.19 15.31 4.5 12 4.5C8.69 4.5 6 7.19 6 10.5C6 15.4 12 21 12 21Z"
+                    stroke="#A8B0BB"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="12" cy="10.5" r="2.2" stroke="#A8B0BB" stroke-width="1.6" />
+                </svg>
+                <span>{{ item.location }}</span>
+              </div>
+
+              <button class="favorite-circle-btn" (click)="toggleFavorite()" [disabled]="isFavoriteUpdating()">
+                <svg class="favorite-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 20.5L10.55 19.18C5.4 14.5 2 11.42 2 7.65C2 4.57 4.42 2.15 7.5 2.15C9.24 2.15 10.91 2.96 12 4.24C13.09 2.96 14.76 2.15 16.5 2.15C19.58 2.15 22 4.57 22 7.65C22 11.42 18.6 14.5 13.45 19.19L12 20.5Z"
+                    [attr.fill]="isFavorite() ? '#F16E7A' : 'transparent'"
+                    [attr.stroke]="isFavorite() ? '#F16E7A' : '#2F5D50'"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="title-right">
+            <div class="price-box" *ngIf="displayPrice(item)">
+              <div class="price-main">{{ displayPrice(item) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tags-share-row">
+          <div class="detail-action-row">
+            <button class="show-map-link" type="button" (click)="showOnMap()">
+              <span>{{ 'details.showOnMap' | translate }}</span>
+            </button>
+
+            <button class="share-link" type="button" (click)="shareItem()">
+              <span>{{ 'details.share' | translate }}</span>
+              <svg class="share-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 8L20 3M20 3H16M20 3V7" stroke="#46AA98" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20 13V17C20 19.2091 18.2091 21 16 21H7C4.79086 21 3 19.2091 3 17V8C3 5.79086 4.79086 4 7 4H11" stroke="#46AA98" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p class="share-status" *ngIf="shareMessage()">{{ shareMessage() }}</p>
+
+        <section class="reserve-section" *ngIf="item.airbnbUrl || item.bookingUrl || item.websiteUrl">
+          <p class="reserve-label">{{ item.entityType === 'Activity' ? ('details.bookThisActivity' | translate) : ('details.reserveYourStay' | translate) }}</p>
+
+          <div class="reserve-buttons">
+            <a
+              *ngIf="item.bookingUrl"
+              class="reserve-btn primary"
+              [href]="item.bookingUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ 'details.bookOnBooking' | translate }}
+            </a>
+
+            <a
+              *ngIf="item.airbnbUrl"
+              class="reserve-btn secondary"
+              [href]="item.airbnbUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ 'details.bookOnAirbnb' | translate }}
+            </a>
+
+            <a
+              *ngIf="item.websiteUrl"
+              class="reserve-btn secondary"
+              [href]="item.websiteUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ 'details.visitWebsite' | translate }}
+            </a>
+          </div>
+        </section>
+
+        <section class="details-section">
+          <h2>{{ 'details.aboutThisPlace' | translate }}</h2>
+          <p class="about-text">{{ getDisplayedAboutText(item) }}</p>
+          <button
+            *ngIf="isAboutTextLong(item)"
+            class="read-more-link"
+            type="button"
+            (click)="toggleAboutText()"
+          >
+            {{ isAboutExpanded() ? ('details.showLess' | translate) : ('details.readMore' | translate) }}
+          </button>
+        </section>
+
+        <section class="details-section" *ngIf="item.amenities.length">
+          <h2>{{ 'details.whatThisPlaceOffers' | translate }}</h2>
+
+          <div class="amenities-grid">
+            <div class="amenity-item" *ngFor="let amenity of item.amenities">
+              <div class="amenity-icon-circle">
+                <svg *ngIf="amenity.icon === 'wind'" class="amenity-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 9H14C16 9 17 8 17 6.5C17 5 16 4 14.5 4C13.1 4 12.2 4.8 12 6" stroke="#50613B" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M4 14H18C20 14 21 15 21 16.5C21 18 20 19 18.5 19C17.1 19 16.2 18.2 16 17" stroke="#50613B" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M4 12H11" stroke="#50613B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+
+                <svg *ngIf="amenity.icon === 'cup'" class="amenity-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 7H16V11C16 14 14 16 11.5 16C9 16 7 14 7 11V7Z" stroke="#50613B" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M16 8H18C19.1 8 20 8.9 20 10C20 11.1 19.1 12 18 12H16" stroke="#50613B" stroke-width="2"/>
+                  <path d="M8 20H15" stroke="#50613B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+
+                <svg *ngIf="amenity.icon === 'car'" class="amenity-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 15L6.5 10.5C6.8 9.6 7.6 9 8.5 9H15.5C16.4 9 17.2 9.6 17.5 10.5L19 15" stroke="#50613B" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M4 15H20V18H18.5" stroke="#50613B" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M5.5 18C6.32843 18 7 17.3284 7 16.5C7 15.6716 6.32843 15 5.5 15C4.67157 15 4 15.6716 4 16.5C4 17.3284 4.67157 18 5.5 18Z" stroke="#50613B" stroke-width="2"/>
+                  <path d="M18.5 18C19.3284 18 20 17.3284 20 16.5C20 15.6716 19.3284 15 18.5 15C17.6716 15 17 15.6716 17 16.5C17 17.3284 17.6716 18 18.5 18Z" stroke="#50613B" stroke-width="2"/>
+                </svg>
+
+                <svg *ngIf="amenity.icon === 'map'" class="amenity-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 5L15 3L20 5V19L15 17L9 19L4 17V5L9 7V19" stroke="#50613B" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </div>
+
+              <span>{{ amenity.label }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="details-section user-review-section" *ngIf="false">
+          <div class="review-form-heading">
+            <div>
+              <p class="review-form-kicker">{{ 'reviews.yourReview' | translate }}</p>
+              <h2>{{ userReview() ? ('reviews.updateYourReview' | translate) : ('reviews.leaveReview' | translate) }}</h2>
+            </div>
+            <span class="review-form-state" *ngIf="userReview()">{{ 'reviews.oneReviewPerItem' | translate }}</span>
+          </div>
+
+          <form class="review-form" (ngSubmit)="submitReview()">
+            <div class="interactive-stars" (mouseleave)="setReviewHoverRating(0)">
+              <button
+                *ngFor="let star of reviewStars"
+                type="button"
+                class="interactive-star"
+                [class.active]="isReviewStarActive(star)"
+                (mouseenter)="setReviewHoverRating(star)"
+                (focus)="setReviewHoverRating(star)"
+                (blur)="setReviewHoverRating(0)"
+                (click)="setReviewRating(star)"
+                [attr.aria-label]="('reviews.starRating' | translate:{ count: star })"
+              >
+                &#9733;
+              </button>
+              <span class="rating-label" *ngIf="reviewRating()">{{ reviewRating() }}/5</span>
+            </div>
+
+            <textarea
+              rows="5"
+              maxlength="500"
+              name="reviewComment"
+              [ngModel]="reviewComment()"
+              (ngModelChange)="reviewComment.set($event)"
+              [placeholder]="'reviews.commentPlaceholder' | translate"
+            ></textarea>
+
+            <div class="review-form-footer">
+              <div>
+                <p class="review-message" *ngIf="reviewMessage()">{{ reviewMessage() }}</p>
+                <p class="review-error" *ngIf="reviewError()">{{ reviewError() }}</p>
+              </div>
+
+              <div class="review-actions">
+                <button
+                  *ngIf="userReview()"
+                  class="delete-review-btn"
+                  type="button"
+                  [disabled]="isReviewDeleting() || isReviewSaving()"
+                  (click)="deleteReview()"
+                >
+                  {{ isReviewDeleting() ? ('common.deleting' | translate) : ('reviews.deleteReview' | translate) }}
+                </button>
+
+                <button
+                  class="submit-review-btn"
+                  type="submit"
+                  [disabled]="isReviewSaving() || isReviewDeleting()"
+                >
+                  {{ isReviewSaving() ? ('common.saving' | translate) : (userReview() ? ('profile.saveChanges' | translate) : ('reviews.postReview' | translate)) }}
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section class="details-section">
+          <div class="review-header">
+            <h2>{{ 'details.topReview' | translate }}</h2>
+            <a
+              class="all-reviews-link"
+              [routerLink]="['/reviews', item.entityType.toLowerCase(), item.id]"
+            >
+              {{ 'details.allReviews' | translate:{ count: item.reviewCount } }}
+            </a>
+          </div>
+
+          <p class="review-message" *ngIf="reviewMessage()">{{ reviewMessage() }}</p>
+          <p class="review-error" *ngIf="reviewError()">{{ reviewError() }}</p>
+
+          <div class="review-card" *ngIf="item.topReview as topReview; else noReviews">
+            <img
+              *ngIf="topReview.avatar; else topReviewInitials"
+              [src]="topReview.avatar"
+              [alt]="topReview.author"
+              class="review-avatar"
+            />
+            <ng-template #topReviewInitials>
+              <div class="review-avatar review-avatar-initials">{{ topReview.initials }}</div>
+            </ng-template>
+
+            <div class="review-content">
+              <div class="review-top">
+                <div>
+                  <h3>{{ topReview.author }}</h3>
+                  <p>{{ topReview.date }}</p>
+                </div>
+
+                <div class="review-stars">
+                  <svg *ngFor="let star of [1,2,3,4,5]" class="review-star" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 3.8L14.47 8.81L20 9.62L16 13.52L16.94 19.02L12 16.42L7.06 19.02L8 13.52L4 9.62L9.53 8.81L12 3.8Z"
+                      [attr.fill]="star <= topReview.rating ? '#F2B84B' : '#E5E8E2'"
+                      [attr.stroke]="star <= topReview.rating ? '#F2B84B' : '#E5E8E2'"
+                      stroke-width="1.2"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <p class="review-text">
+                {{ topReview.text }}
+              </p>
+
+              <div class="review-report-row">
+                <button
+                  *ngIf="canReportReview(topReview)"
+                  class="report-review-btn"
+                  type="button"
+                  [disabled]="isTopReviewReporting()"
+                  (click)="reportTopReview(topReview)"
+                >
+                  {{ isTopReviewReporting() ? ('common.saving' | translate) : ('reviews.reportReview' | translate) }}
+                </button>
+
+                <span *ngIf="isReviewReported(topReview)" class="reported-review-badge">
+                  <span aria-hidden="true">✓</span>
+                  {{ 'reviews.reportedBadge' | translate }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noReviews>
+            <div class="no-review-card">
+              <h3>{{ 'reviews.noReviewsTitle' | translate }}</h3>
+              <p>{{ 'reviews.noReviewsText' | translate }}</p>
+            </div>
+          </ng-template>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #loadingOrNotFound>
+    <div class="not-found" *ngIf="isLoading(); else notFound">
+      <h2>{{ 'common.loading' | translate }}</h2>
+    </div>
+  </ng-template>
+
+  <ng-template #notFound>
+    <div class="not-found">
+      <h2>{{ 'details.itemNotFound' | translate }}</h2>
+    </div>
+  </ng-template>
+</div>

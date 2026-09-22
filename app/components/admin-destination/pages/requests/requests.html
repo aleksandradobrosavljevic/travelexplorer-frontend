@@ -1,0 +1,306 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div>
+      <h1>Requests</h1>
+    </div>
+  </div>
+
+  <section class="stats-row">
+    <article class="stat-card stat-accounts">
+      <span class="stat-label">Accounts</span>
+      <strong>{{ accountCount() }}</strong>
+      <span class="stat-hint">Publisher account requests</span>
+    </article>
+    <article class="stat-card stat-objects">
+      <span class="stat-label">Objects</span>
+      <strong>{{ objectCount() }}</strong>
+      <span class="stat-hint">Places waiting for review</span>
+    </article>
+    <article class="stat-card stat-activities">
+      <span class="stat-label">Activities</span>
+      <strong>{{ activityCount() }}</strong>
+      <span class="stat-hint">Activities waiting for review</span>
+    </article>
+    <article class="stat-card stat-events">
+      <span class="stat-label">Events</span>
+      <strong>{{ eventCount() }}</strong>
+      <span class="stat-hint">Events waiting for review</span>
+    </article>
+  </section>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2>Filters</h2>
+      </div>
+      <button type="button" class="ghost-btn" (click)="resetFilters()">Clear all filters</button>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group search-group">
+        <label for="requestSearch">Search</label>
+        <input
+          id="requestSearch"
+          type="text"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value); first.set(0)"
+          placeholder="Name, type, contact or description"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="requestType">Request type</label>
+        <p-select
+          inputId="requestType"
+          [options]="requestKindOptions"
+          [ngModel]="typeFilter()"
+          (ngModelChange)="typeFilter.set($event); first.set(0)"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          styleClass="status-filter-select">
+        </p-select>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2>Approval queue</h2>
+        <p class="card-subtitle">Approve or reject pending accounts, objects, activities and events.</p>
+      </div>
+      <span class="count-pill">{{ filteredCount() }} / {{ totalCount() }} results</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request</th>
+            <th>Type</th>
+            <th>Submitted by</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of paginatedRequests(); trackBy: trackByRequest">
+            <tr (click)="openModal(item)" style="cursor: pointer;">
+              <td>
+                <strong>{{ item.title }}</strong>
+                <div class="muted-text">{{ item.subtitle }}</div>
+              </td>
+              <td>
+                <span class="type-badge" [ngClass]="item.kind">{{ kindLabel(item.kind) }}</span>
+              </td>
+              <td>{{ item.owner }}</td>
+              <td>{{ item.createdAt | date:'mediumDate' }}</td>
+            </tr>
+          </ng-container>
+
+          <tr *ngIf="!filteredRequests().length">
+            <td colspan="4" class="empty-row">No pending requests matched the selected filters.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p-paginator
+      *ngIf="filteredCount() > 0"
+      [rows]="pageSize()"
+      [totalRecords]="filteredCount()"
+      [first]="first()"
+      [rowsPerPageOptions]="pageSizeOptions"
+      (onPageChange)="onPageChange($event)"
+      styleClass="requests-paginator">
+    </p-paginator>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="selectedItem()">
+    <div class="modal-card" (mousedown)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="type-badge" [ngClass]="selectedItem()!.kind">{{ kindLabel(selectedItem()!.kind) }}</span>
+          <h2>{{ selectedItem()!.title }}</h2>
+          <p class="card-subtitle">{{ selectedItem()!.subtitle }}</p>
+        </div>
+        <button type="button" class="ghost-btn" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-image-wrapper">
+          <img *ngIf="selectedItem()!.imageUrl" [src]="selectedItem()!.imageUrl" alt="Preview" class="modal-image" />
+          <div *ngIf="!selectedItem()!.imageUrl" class="modal-image-placeholder">
+            <span>No image uploaded</span>
+          </div>
+        </div>
+
+        <ng-container *ngIf="selectedItem()!.kind === 'object'">
+          <div class="detail-grid">
+            <div class="detail-field">
+              <span class="detail-label">Type</span>
+              <span class="detail-value">{{ selectedItem()!.subtitle }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.phone">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ selectedItem()!.phone }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.website">
+              <span class="detail-label">Website</span>
+              <span class="detail-value">{{ selectedItem()!.website }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.address">
+              <span class="detail-label">Address</span>
+              <span class="detail-value">{{ selectedItem()!.address }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-label">Submitted</span>
+              <span class="detail-value">{{ selectedItem()!.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="detail-field detail-field--wide" *ngIf="selectedItem()!.detail">
+              <span class="detail-label">Description</span>
+              <span class="detail-value">{{ selectedItem()!.detail }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="selectedItem()!.kind === 'activity'">
+          <div class="detail-grid">
+            <div class="detail-field">
+              <span class="detail-label">Type</span>
+              <span class="detail-value">{{ selectedItem()!.subtitle }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.destinationName">
+              <span class="detail-label">Destination</span>
+              <span class="detail-value">{{ selectedItem()!.destinationName }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.objectName">
+              <span class="detail-label">Linked object</span>
+              <span class="detail-value">{{ selectedItem()!.objectName }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.durationMinutes">
+              <span class="detail-label">Duration</span>
+              <span class="detail-value">{{ selectedItem()!.durationMinutes }} min</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.price != null">
+              <span class="detail-label">Price</span>
+              <span class="detail-value">{{ selectedItem()!.price }} {{ selectedItem()!.currency }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-label">Submitted</span>
+              <span class="detail-value">{{ selectedItem()!.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="detail-field detail-field--wide" *ngIf="selectedItem()!.detail">
+              <span class="detail-label">Description</span>
+              <span class="detail-value">{{ selectedItem()!.detail }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="selectedItem()!.kind === 'event'">
+          <div class="detail-grid">
+            <div class="detail-field">
+              <span class="detail-label">Type</span>
+              <span class="detail-value">{{ selectedItem()!.subtitle }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.objectName">
+              <span class="detail-label">Object</span>
+              <span class="detail-value">{{ selectedItem()!.objectName }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.startDatetime">
+              <span class="detail-label">Start</span>
+              <span class="detail-value">{{ selectedItem()!.startDatetime | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.endDatetime">
+              <span class="detail-label">End</span>
+              <span class="detail-value">{{ selectedItem()!.endDatetime | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.capacity">
+              <span class="detail-label">Capacity</span>
+              <span class="detail-value">{{ selectedItem()!.capacity }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.price != null">
+              <span class="detail-label">Price</span>
+              <span class="detail-value">{{ selectedItem()!.price }} {{ selectedItem()!.currency }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-label">Submitted</span>
+              <span class="detail-value">{{ selectedItem()!.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="detail-field detail-field--wide" *ngIf="selectedItem()!.detail">
+              <span class="detail-label">Description</span>
+              <span class="detail-value">{{ selectedItem()!.detail }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="selectedItem()!.kind === 'account'">
+          <div class="detail-grid">
+            <div class="detail-field">
+              <span class="detail-label">Publisher type</span>
+              <span class="detail-value">{{ selectedItem()!.subtitle }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-label">Contact person</span>
+              <span class="detail-value">{{ selectedItem()!.owner }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.phone">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ selectedItem()!.phone }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.website">
+              <span class="detail-label">Website</span>
+              <span class="detail-value">{{ selectedItem()!.website }}</span>
+            </div>
+            <div class="detail-field" *ngIf="selectedItem()!.destinationName">
+              <span class="detail-label">Destination</span>
+              <span class="detail-value">{{ selectedItem()!.destinationName }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-label">Submitted</span>
+              <span class="detail-value">{{ selectedItem()!.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
+            <div class="detail-field detail-field--wide" *ngIf="selectedItem()!.detail">
+              <span class="detail-label">Description</span>
+              <span class="detail-value">{{ selectedItem()!.detail }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="modal-rejection">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;">
+          <label class="detail-label">Rejection reason</label>
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+            [style.color]="rejectionReason(selectedItem()!).length > REJECTION_REASON_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+            {{ rejectionReason(selectedItem()!).length }} / {{ REJECTION_REASON_MAX_LENGTH }}
+          </span>
+        </div>
+        <textarea
+          class="textarea-control"
+          [value]="rejectionReason(selectedItem()!)"
+          (input)="setRejectionReason(selectedItem()!, $any($event.target).value)"
+          maxlength="800"
+          rows="2"
+          placeholder="Enter rejection reason..."
+        ></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="ghost-btn" (click)="closeModal()">Close</button>
+        <div class="action-row">
+          <button type="button" class="approve-btn"
+            (click)="approve(selectedItem()!)"
+            [disabled]="isActionInProgress(selectedItem()!) || !!rejectionReason(selectedItem()!).trim()">
+            {{ isActionInProgress(selectedItem()!) ? 'Saving...' : 'Approve' }}
+          </button>
+          <button type="button" class="danger-btn"
+            (click)="reject(selectedItem()!)"
+            [disabled]="isActionInProgress(selectedItem()!)">
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

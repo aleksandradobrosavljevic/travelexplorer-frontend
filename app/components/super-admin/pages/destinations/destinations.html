@@ -1,0 +1,441 @@
+<section class="destinations-page">
+  <div class="page-header">
+    <div>
+      <h1>Destinations</h1>
+      <p>Manage destinations and destination types from one place.</p>
+    </div>
+    <div class="header-actions">
+      <button class="primary-btn" (click)="openAddForm()">Add New Destination</button>
+      <button class="primary-btn" (click)="openDestinationTypeForm()">Add New Destination Type</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <ng-container *ngIf="activeTab === 'destinations'">
+      <div class="stat-card">
+        <span class="stat-label">Total Destinations</span>
+        <strong>{{ totalRecords() }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active</span>
+        <strong>{{ activeCount() }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Inactive</span>
+        <strong>{{ inactiveCount() }}</strong>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="activeTab === 'destinationTypes'">
+      <div class="stat-card">
+        <span class="stat-label">Total Destination Types</span>
+        <strong>{{ destinationTypes().length }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active</span>
+        <strong>{{ activeDestinationTypesCount() }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Inactive</span>
+        <strong>{{ inactiveDestinationTypesCount() }}</strong>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="destinations-card">
+    <div class="card-header">
+      <div>
+        <div class="tabs-row">
+          <button class="tab-btn" [class.active]="activeTab === 'destinationTypes'" (click)="setActiveTab('destinationTypes')">Destination Types</button>
+          <button class="tab-btn" [class.active]="activeTab === 'destinations'" (click)="setActiveTab('destinations')">Destinations</button>
+        </div>
+        <p class="card-subtitle">
+          {{ activeTab === 'destinations' ? 'Inspect and manage destinations.' : 'Manage destination type values used for destination classification.' }}
+        </p>
+      </div>
+      <span class="destinations-count">
+        {{ activeTab === 'destinations' ? totalRecords() + ' results' : destinationTypes().length + ' types' }}
+      </span>
+    </div>
+
+    <!-- Destinations tab -->
+    <ng-container *ngIf="activeTab === 'destinations'">
+      <div class="filters-row">
+        <div class="filter-group search-group">
+          <label for="destinationSearch">Search</label>
+          <input id="destinationSearch" type="text" placeholder="Search by destination, country or description"
+            [(ngModel)]="searchTerm" (input)="onSearchChange()" />
+        </div>
+        <div class="filter-group">
+          <label>Type</label>
+          <p-select
+            [options]="typeFilterOptions()"
+            [(ngModel)]="selectedType"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="false"
+            (onChange)="onTypeChange()"
+            appendTo="body"
+            styleClass="dest-filter-select">
+          </p-select>
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <p-select
+            [options]="statusFilterOptions"
+            [(ngModel)]="selectedStatus"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="false"
+            (onChange)="onStatusChange()"
+            appendTo="body"
+            styleClass="dest-filter-select">
+          </p-select>
+        </div>
+        <div class="filter-actions">
+          <button class="secondary-btn" (click)="clearAllFilters()">Clear All Filters</button>
+        </div>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoading()">Loading destinations...</div>
+
+      <div class="table-wrapper" *ngIf="!isLoading()">
+        <table class="destinations-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Country</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Description</th>
+              <th>Created At</th>
+              <th>Updated At</th>
+              <th class="actions-column">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let destination of filteredDestinations()">
+              <td>{{ destination.name }}</td>
+              <td>{{ destination.country }}</td>
+              <td>{{ destination.destinationTypeName }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(destination.isActive)">
+                  {{ destination.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>{{ formatCoordinate(destination.latitude) }}</td>
+              <td>{{ formatCoordinate(destination.longitude) }}</td>
+              <td>{{ destination.description || '-' }}</td>
+              <td>{{ formatDate(destination.createdAt) }}</td>
+              <td>{{ formatDate(destination.updatedAt) }}</td>
+              <td class="actions-column">
+                <div class="action-buttons">
+                  <button class="edit-btn" (click)="openEditForm(destination)">Edit</button>
+                  <button class="toggle-btn" [ngClass]="destination.isActive ? 'deactivate-btn' : 'activate-btn'"
+                    (click)="openStatusConfirm(destination)">
+                    {{ destination.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                  <button class="view-map-btn"
+                    [disabled]="!destination.latitude || !destination.longitude"
+                    (click)="viewOnMap(destination)"
+                    [title]="!destination.latitude || !destination.longitude ? 'No coordinates set' : 'View on map'">
+                    View on Map
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredDestinations().length === 0">
+              <td colspan="10" class="empty-state">No destinations found for the selected filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p-paginator
+        [rows]="pageSize()"
+        [totalRecords]="totalRecords()"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        (onPageChange)="onPageChange($event)"
+        appendTo="body"
+        styleClass="dest-paginator">
+      </p-paginator>
+    </ng-container>
+
+    <!-- Destination Types tab -->
+    <ng-container *ngIf="activeTab === 'destinationTypes'">
+      <div class="table-wrapper">
+        <table class="destinations-table destination-types-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Created At</th>
+              <th>Updated At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let type of destinationTypes()">
+              <td>{{ type.name }}</td>
+              <td>{{ type.description }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(type.isActive)">
+                  {{ type.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>{{ formatDate(type.createdAt) }}</td>
+              <td>{{ formatDate(type.updatedAt) }}</td>
+              <td class="actions-column">
+                <div class="action-buttons">
+                  <button class="edit-btn" (click)="openDestinationTypeEditForm(type)">Edit</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="destinationTypes().length === 0">
+              <td colspan="6" class="empty-state">No destination types available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Destination Add/Edit Panel -->
+  <div class="form-overlay" *ngIf="isFormOpen()" (click)="closeForm()"></div>
+  <aside class="form-panel" [class.open]="isFormOpen()">
+    <div class="form-panel-header">
+      <div>
+        <h2>{{ formMode === 'add' ? 'Add New Destination' : 'Edit Destination' }}</h2>
+        <p>{{ formMode === 'add' ? 'Create a destination.' : 'Update existing destination data.' }}</p>
+      </div>
+      <button class="close-btn" (click)="closeForm()">×</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Destination Type</label>
+        <p-select
+          [options]="destinationTypeOptions()"
+          [(ngModel)]="formData.destinationTypeId"
+          optionLabel="name"
+          optionValue="id"
+          [showClear]="false"
+          appendTo="body"
+          styleClass="form-field-select">
+        </p-select>
+      </div>
+      <div class="form-group">
+        <label for="destinationName">Name</label>
+        <input id="destinationName" type="text" [(ngModel)]="formData.name" />
+      </div>
+      <div class="form-group">
+        <label>Country</label>
+        <p-select
+          [options]="countryOptions()"
+          [(ngModel)]="formData.country"
+          optionLabel="label"
+          optionValue="name"
+          [filter]="true"
+          filterBy="label"
+          filterPlaceholder="Type code or country"
+          emptyFilterMessage="No countries found"
+          [showClear]="false"
+          appendTo="body"
+          placeholder="Select country"
+          styleClass="form-field-select">
+        </p-select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <p-select
+          [options]="formStatusOptions"
+          [(ngModel)]="formData.isActive"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          appendTo="body"
+          styleClass="form-field-select">
+        </p-select>
+      </div>
+      <div class="form-group form-group-full">
+        <div class="field-label-row">
+          <label for="destinationDescription">Description <span class="optional-tag">Optional</span></label>
+          <span class="char-counter" [class.char-counter-over]="formData.description.length > DESCRIPTION_MAX_LENGTH">
+            {{ formData.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}
+          </span>
+        </div>
+        <textarea id="destinationDescription" rows="3"
+          [ngModel]="formData.description"
+          (ngModelChange)="onDescriptionChange($event)"
+          [maxlength]="DESCRIPTION_MAX_LENGTH"></textarea>
+      </div>
+
+      <!-- Location picker -->
+      <div class="form-group form-group-full">
+        <div class="map-picker-header">
+          <label>Location <span class="optional-tag">Optional</span></label>
+          <div class="map-coords-row">
+            <span *ngIf="coordLat() !== null && coordLng() !== null" class="coords-display">
+              {{ coordLat() }}, {{ coordLng() }}
+            </span>
+            <span *ngIf="coordLat() === null || coordLng() === null" class="coords-placeholder">No location set</span>
+            <button *ngIf="coordLat() !== null || coordLng() !== null" type="button" class="clear-pin-btn" (click)="clearMapPin()">Clear pin</button>
+          </div>
+        </div>
+
+        <div class="map-search-wrapper">
+          <div class="map-search-box">
+            <svg class="map-search-icon" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="6.5" stroke="#9ca3af" stroke-width="1.8"/>
+              <path d="M16 16l4 4" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="text" class="map-search-input" placeholder="Search city, region or area..."
+              [(ngModel)]="mapSearchQuery" (input)="onMapSearchChange($event)" />
+            <span *ngIf="isMapSearching()" class="map-search-spinner">⟳</span>
+            <button *ngIf="mapSearchQuery" type="button" class="map-search-clear" (click)="clearMapSearch()">×</button>
+          </div>
+
+          <div class="map-search-results-fixed"
+               *ngIf="mapSearchResults().length > 0"
+               [style.top.px]="dropdownTop()"
+               [style.left.px]="dropdownLeft()"
+               [style.width.px]="dropdownWidth()">
+            <button *ngFor="let result of mapSearchResults()" type="button"
+              class="map-search-result-item" (click)="selectSearchResult(result)">
+              {{ result.display_name }}
+            </button>
+          </div>
+        </div>
+
+        <div id="destination-mini-map" class="mini-map"></div>
+        <p class="map-hint" [class.detecting]="isDetectingDestination()">
+          {{ isDetectingDestination() ? 'Detecting location...' : (destinationDetectionMessage() || 'Click anywhere on the map to set the pin.') }}
+        </p>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="closeForm()">Cancel</button>
+      <button class="save-btn" (click)="saveDestination()" [disabled]="isSubmitting() || !hasDestinationChanges()">
+        {{ isSubmitting() ? 'Saving...' : formMode === 'add' ? 'Create Destination' : 'Save Changes' }}
+      </button>
+    </div>
+  </aside>
+
+  <!-- Destination Type Add Panel -->
+  <div class="form-overlay" *ngIf="isDestinationTypeFormOpen()" (click)="closeDestinationTypeForm()"></div>
+  <aside class="form-panel" [class.open]="isDestinationTypeFormOpen()">
+    <div class="form-panel-header">
+      <div>
+        <h2>Add New Destination Type</h2>
+        <p>Create a destination type used for grouping destinations.</p>
+      </div>
+      <button class="close-btn" (click)="closeDestinationTypeForm()">×</button>
+    </div>
+    <div class="form-grid single-column-form">
+      <div class="form-group form-group-full">
+        <label>Name</label>
+        <input type="text" [(ngModel)]="destinationTypeFormData.name" placeholder="Enter name" />
+      </div>
+      <div class="form-group form-group-full">
+        <div class="field-label-row">
+          <label>Description</label>
+          <span class="char-counter" [class.char-counter-over]="destinationTypeFormData.description.length > DESTINATION_TYPE_DESCRIPTION_MAX_LENGTH">
+            {{ destinationTypeFormData.description.length }} / {{ DESTINATION_TYPE_DESCRIPTION_MAX_LENGTH }}
+          </span>
+        </div>
+        <textarea rows="4"
+          [ngModel]="destinationTypeFormData.description"
+          (ngModelChange)="onDestinationTypeDescriptionChange($event)"
+          [maxlength]="DESTINATION_TYPE_DESCRIPTION_MAX_LENGTH"
+          placeholder="Enter description"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="closeDestinationTypeForm()">Cancel</button>
+      <button class="save-btn" (click)="saveDestinationType()">Save</button>
+    </div>
+  </aside>
+
+  <!-- Status Confirm Modal -->
+  <div class="modal-overlay" *ngIf="isStatusConfirmOpen()" (click)="closeStatusConfirm()"></div>
+  <div class="confirm-modal" *ngIf="isStatusConfirmOpen()">
+    <div class="modal-header">
+      <div>
+        <h2>{{ selectedDestinationForStatus()?.isActive ? 'Deactivate Destination' : 'Activate Destination' }}</h2>
+        <p>Are you sure you want to {{ selectedDestinationForStatus()?.isActive ? 'deactivate' : 'activate' }} this destination?</p>
+      </div>
+      <button class="modal-close-btn" (click)="closeStatusConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-target">{{ selectedDestinationForStatus()?.name }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" (click)="closeStatusConfirm()">Cancel</button>
+      <button class="modal-confirm-btn" [ngClass]="selectedDestinationForStatus()?.isActive ? 'warning-confirm' : 'success-confirm'"
+        (click)="confirmStatusChange()">
+        {{ selectedDestinationForStatus()?.isActive ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Destination Type Status Confirm -->
+  <div class="modal-overlay" *ngIf="isDestinationTypeStatusConfirmOpen()" (click)="closeDestinationTypeStatusConfirm()"></div>
+  <div class="confirm-modal" *ngIf="isDestinationTypeStatusConfirmOpen()">
+    <div class="modal-header">
+      <div>
+        <h2>{{ selectedDestinationTypeForStatus()?.isActive ? 'Deactivate' : 'Activate' }} Destination Type</h2>
+        <p>Are you sure you want to {{ selectedDestinationTypeForStatus()?.isActive ? 'deactivate' : 'activate' }} this destination type?</p>
+      </div>
+      <button class="modal-close-btn" (click)="closeDestinationTypeStatusConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-target">{{ selectedDestinationTypeForStatus()?.name }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" (click)="closeDestinationTypeStatusConfirm()">Cancel</button>
+      <button class="modal-confirm-btn" [ngClass]="selectedDestinationTypeForStatus()?.isActive ? 'warning-confirm' : 'success-confirm'"
+        (click)="confirmDestinationTypeStatusChange()">
+        {{ selectedDestinationTypeForStatus()?.isActive ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Destination Type Edit Panel -->
+  <div class="form-overlay" *ngIf="isDestinationTypeEditFormOpen()" (click)="closeDestinationTypeEditForm()"></div>
+  <aside class="form-panel" [class.open]="isDestinationTypeEditFormOpen()">
+    <div class="form-panel-header">
+      <div>
+        <h2>Edit Destination Type</h2>
+        <p>Update destination type data.</p>
+      </div>
+      <button class="close-btn" (click)="closeDestinationTypeEditForm()">×</button>
+    </div>
+    <div class="form-grid single-column-form">
+      <div class="form-group form-group-full">
+        <label>Name</label>
+        <input type="text" [(ngModel)]="destinationTypeEditFormData.name" placeholder="Enter name" />
+      </div>
+      <div class="form-group form-group-full">
+        <div class="field-label-row">
+          <label>Description</label>
+          <span class="char-counter" [class.char-counter-over]="destinationTypeEditFormData.description.length > DESTINATION_TYPE_DESCRIPTION_MAX_LENGTH">
+            {{ destinationTypeEditFormData.description.length }} / {{ DESTINATION_TYPE_DESCRIPTION_MAX_LENGTH }}
+          </span>
+        </div>
+        <textarea rows="4"
+          [ngModel]="destinationTypeEditFormData.description"
+          (ngModelChange)="onDestinationTypeEditDescriptionChange($event)"
+          [maxlength]="DESTINATION_TYPE_DESCRIPTION_MAX_LENGTH"
+          placeholder="Enter description"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="closeDestinationTypeEditForm()">Cancel</button>
+      <button class="save-btn" (click)="saveDestinationTypeEdit()" [disabled]="!hasDestinationTypeEditChanges()">Save Changes</button>
+    </div>
+  </aside>
+
+</section>

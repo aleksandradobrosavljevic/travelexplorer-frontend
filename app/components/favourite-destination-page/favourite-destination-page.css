@@ -1,0 +1,146 @@
+.destination-detail-page-panel {
+  margin-top: 8px;
+}
+
+.destination-detail-head h1 {
+  margin: 0;
+  color: #1d3557;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.destination-detail-page-panel .saved-trips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 24px;
+  overflow: visible;
+  margin-top: 4px;
+  padding-bottom: 4px;
+  scroll-snap-type: none;
+  scrollbar-width: none;
+}
+
+.destination-detail-page-panel .saved-trips-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.destination-detail-page-panel .saved-trip-card {
+  width: 100%;
+  flex: none;
+  scroll-snap-align: unset;
+}
+
+@media (max-width: 1100px) {
+  .destination-detail-page-panel .saved-trips-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .destination-detail-page-panel {
+    padding: 14px;
+  }
+
+  .destination-detail-controls {
+    align-items: stretch;
+  }
+
+  .type-filter-tabs,
+  .favourites-search-bar--items {
+    width: 100%;
+  }
+
+  .destination-detail-page-panel .saved-trips-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .destination-detail-page-panel .saved-trip-card {
+    border-radius: 16px;
+  }
+
+  .destination-detail-page-panel .card-image-wrapper {
+    height: clamp(112px, 30vw, 150px);
+  }
+
+  .destination-detail-page-panel .heart-btn {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .destination-detail-page-panel .heart-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .destination-detail-page-panel .rating-badge {
+    left: 10px;
+    bottom: 10px;
+    padding: 5px 8px;
+    font-size: 0.78rem;
+  }
+
+  .destination-detail-page-panel .rating-star {
+    width: 13px;
+    height: 13px;
+  }
+
+  .destination-detail-page-panel .card-content {
+    padding: 12px;
+  }
+
+  .destination-detail-page-panel .card-main-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .destination-detail-page-panel .card-main-row h2 {
+    font-size: 0.95rem;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+  }
+
+  .destination-detail-page-panel .price-wrapper {
+    align-items: flex-start;
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .destination-detail-page-panel .price {
+    font-size: 0.9rem;
+  }
+
+  .destination-detail-page-panel .price-unit,
+  .destination-detail-page-panel .location-row,
+  .destination-detail-page-panel .footer-action {
+    font-size: 0.78rem;
+  }
+
+  .destination-detail-page-panel .location-row {
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .destination-detail-page-panel .location-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .destination-detail-page-panel .card-footer {
+    padding: 0 12px 12px;
+  }
+}
+
+:host ::ng-deep .p-select-label {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  line-height: normal !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}

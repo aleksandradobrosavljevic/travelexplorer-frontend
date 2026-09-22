@@ -1,0 +1,52 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div>
+      <h1>Publisher Overview</h1>
+      <p>Publishers approved for your destination.</p>
+    </div>
+  </div>
+
+  <div class="detail-loading" *ngIf="isLoading()">Loading...</div>
+  <div class="detail-error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+
+  <section class="table-card" *ngIf="!isLoading()">
+    <div class="card-header">
+      <div>
+        <h2>Publishers</h2>
+        <p class="card-subtitle">Publishers you have approved for this destination.</p>
+      </div>
+      <span class="count-pill">{{ publishers().length }} records</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Organization</th>
+            <th>Contact</th>
+            <th>Type</th>
+            <th>Email</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let item of publishers(); trackBy: trackById"
+            class="clickable-row"
+            (click)="goToPublisher(item)"
+          >
+            <td><strong>{{ item.organizationName || item.contactPerson || '—' }}</strong></td>
+            <td>{{ item.contactPerson || '—' }}</td>
+            <td>{{ item.publisherTypeName || '—' }}</td>
+            <td>{{ item.email }}</td>
+            <td>{{ item.joinedAt | date:'mediumDate' }}</td>
+          </tr>
+
+          <tr *ngIf="!publishers().length">
+            <td colspan="5" class="empty-row">No publishers found for this destination.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

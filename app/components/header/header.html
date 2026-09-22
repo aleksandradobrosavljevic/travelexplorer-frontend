@@ -1,0 +1,185 @@
+<header class="header" [class.minimal-header]="mode === 'minimal'" [class.menu-open]="isMobileMenuOpen">
+  <div class="header-top">
+    <div class="logo-section">
+      <div class="logo-circle">
+        <svg
+          class="logo-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" />
+          <path
+            d="M15.5 8.5L13.2 13.2L8.5 15.5L10.8 10.8L15.5 8.5Z"
+            fill="white"
+          />
+        </svg>
+      </div>
+
+      <div class="logo-text">
+        <h2>{{ 'app.name' | translate }}</h2>
+        <p>{{ 'app.tagline' | translate }}</p>
+      </div>
+    </div>
+
+    <ng-container *ngIf="mode === 'full'">
+      <div class="mobile-header-actions">
+        <div class="notification-wrap notification-wrap--mobile" *ngIf="isLoggedIn && isTourist">
+          <button class="notification-btn" type="button" (click)="toggleNotifications()" [attr.aria-label]="'notifications.title' | translate">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 9A6 6 0 0 0 6 9c0 7-3 7-3 7h18s-3 0-3-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="notification-count" *ngIf="unreadNotificationCount">{{ unreadNotificationCount }}</span>
+          </button>
+
+          <div class="notification-panel" *ngIf="isNotificationPanelOpen">
+            <div class="notification-panel__head">
+              <strong>{{ 'notifications.title' | translate }}</strong>
+              <button type="button" *ngIf="notifications.length" (click)="markAllNotificationsRead($event)">
+                {{ 'notifications.markAllRead' | translate }}
+              </button>
+            </div>
+
+            <button
+              class="notification-item"
+              type="button"
+              *ngFor="let notification of notifications"
+              (click)="markNotificationRead(notification, $event)">
+              {{ notification.message }}
+            </button>
+
+            <p class="notification-empty" *ngIf="!notifications.length">
+              {{ 'notifications.empty' | translate }}
+            </p>
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" type="button" (click)="toggleMobileMenu()" [attr.aria-expanded]="isMobileMenuOpen" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <nav class="menu-nav">
+        <a
+          class="menu-link home-link"
+          routerLink="/"
+          [class.active-link]="isNavActive('home')"
+          (click)="closeMobileMenu()"
+        >
+          {{ 'navigation.home' | translate }}
+        </a>
+
+        <a
+          class="menu-link"
+          routerLink="/map"
+          [class.active-link]="isNavActive('map')"
+          (click)="closeMobileMenu()"
+        >
+          {{ 'navigation.map' | translate }}
+        </a>
+
+        <a
+          class="menu-link"
+          routerLink="/favourites"
+          [class.active-link]="isNavActive('favourites')"
+          (click)="closeMobileMenu()"
+        >
+          {{ 'navigation.favourites' | translate }}
+        </a>
+
+        <a
+          class="menu-link"
+          routerLink="/faq"
+          [class.active-link]="isNavActive('support')"
+          (click)="closeMobileMenu()"
+        >
+          {{ 'navigation.support' | translate }}
+        </a>
+      </nav>
+
+      <div class="profile-section" *ngIf="isLoggedIn; else authLinks">
+        <div class="language-switch" *ngIf="isTourist" aria-label="Language">
+          <button
+            type="button"
+            [class.active]="currentLanguage === 'en'"
+            (click)="setLanguage('en')">
+            EN
+          </button>
+          <button
+            type="button"
+            [class.active]="currentLanguage === 'sr'"
+            (click)="setLanguage('sr')">
+            SR
+          </button>
+        </div>
+
+        <div class="notification-wrap" *ngIf="isTourist">
+          <button class="notification-btn" type="button" (click)="toggleNotifications()" [attr.aria-label]="'notifications.title' | translate">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 9A6 6 0 0 0 6 9c0 7-3 7-3 7h18s-3 0-3-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="notification-count" *ngIf="unreadNotificationCount">{{ unreadNotificationCount }}</span>
+          </button>
+
+          <div class="notification-panel" *ngIf="isNotificationPanelOpen">
+            <div class="notification-panel__head">
+              <strong>{{ 'notifications.title' | translate }}</strong>
+              <button type="button" *ngIf="notifications.length" (click)="markAllNotificationsRead($event)">
+                {{ 'notifications.markAllRead' | translate }}
+              </button>
+            </div>
+
+            <button
+              class="notification-item"
+              type="button"
+              *ngFor="let notification of notifications"
+              (click)="markNotificationRead(notification, $event)">
+              {{ notification.message }}
+            </button>
+
+            <p class="notification-empty" *ngIf="!notifications.length">
+              {{ 'notifications.empty' | translate }}
+            </p>
+          </div>
+        </div>
+
+        <button class="profile-btn" type="button" (click)="onOpenProfile()">
+          <img *ngIf="avatarUrl; else profileIcon" [src]="avatarUrl" alt="Profile photo" class="profile-avatar" />
+          <ng-template #profileIcon>
+            <svg
+              class="profile-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="12" cy="8" r="4" stroke="white" stroke-width="2" />
+              <path
+                d="M4 20C4 16.5 7 14 12 14C17 14 20 16.5 20 20"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </ng-template>
+        </button>
+      </div>
+
+      <ng-template #authLinks>
+        <div class="auth-actions">
+          <a class="auth-link secondary" routerLink="/register">{{ 'navigation.register' | translate }}</a>
+          <a class="auth-link primary" routerLink="/login">{{ 'navigation.login' | translate }}</a>
+        </div>
+      </ng-template>
+    </ng-container>
+  </div>
+</header>
+
+<app-user-profile
+  *ngIf="isUserProfileOpen"
+  (avatarChanged)="onAvatarChanged($event)"
+  (close)="closeUserProfile()">
+</app-user-profile>

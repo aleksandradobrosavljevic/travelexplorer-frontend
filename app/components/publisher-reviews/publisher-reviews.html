@@ -1,0 +1,271 @@
+<app-publisher-header></app-publisher-header>
+
+<div class="publisher-page">
+  <main class="content-wrapper">
+
+    <div class="page-header">
+      <div>
+        <button
+          *ngIf="returnToContentId()"
+          type="button"
+          class="back-to-content-btn"
+          (click)="goBackToContentDetails()">
+          <span aria-hidden="true">&larr;</span>
+          Back
+        </button>
+        <h1>{{ 'publisher.reviews.title' | translate }}</h1>
+        <p>{{ 'publisher.reviews.subtitle' | translate: { type: contentTypeLabel(true) } }}</p>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading()" class="empty-state">{{ 'publisher.reviews.loading' | translate }}</div>
+
+    <ng-container *ngIf="!isLoading()">
+      <section class="analytics-card">
+        <div class="analytics-head">
+          <div>
+            <span class="eyebrow">{{ 'publisher.reviews.analyticsEyebrow' | translate }}</span>
+            <h2>{{ selectedAnalyticsGroup()?.contentTitle ?? ('publisher.reviews.noContentSelected' | translate) }}</h2>
+            <p class="analytics-context">{{ 'publisher.reviews.selectedContentHint' | translate }}</p>
+          </div>
+          <div class="year-filter">
+            <label>{{ 'statistics.year' | translate }}</label>
+            <p-select
+              [options]="yearOptions()"
+              [ngModel]="selectedYear()"
+              (ngModelChange)="onYearChange($event)"
+              [appendTo]="'body'"
+              styleClass="year-select">
+            </p-select>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <article class="summary-tile">
+            <span>{{ 'publisher.reviews.totalReviews' | translate }}</span>
+            <strong>{{ totalReviews() }}</strong>
+            <small>{{ selectedAnalyticsGroup()?.contentTitle ?? ('publisher.reviews.noContentSelected' | translate) }}</small>
+          </article>
+          <article class="summary-tile">
+            <span>{{ 'publisher.reviews.averageRating' | translate }}</span>
+            <strong>{{ averageRating().toFixed(1) }}</strong>
+            <small>{{ 'publisher.reviews.fiveStarShare' | translate: { percent: fiveStarPercentage() } }}</small>
+          </article>
+          <article class="summary-tile">
+            <span>{{ 'publisher.reviews.bestReviewMonth' | translate }}</span>
+            <strong>{{ bestRatedMonth()?.label ?? '-' }}</strong>
+            <small>{{ 'publisher.reviews.averageValue' | translate: { value: bestRatedMonthAverageText() } }}</small>
+          </article>
+          <article class="summary-tile">
+            <span>{{ 'publisher.reviews.lowestReviewMonth' | translate }}</span>
+            <strong>{{ worstRatedMonth()?.label ?? '-' }}</strong>
+            <small>{{ 'publisher.reviews.averageValue' | translate: { value: worstRatedMonthAverageText() } }}</small>
+          </article>
+        </div>
+
+        <div class="analytics-grid">
+          <div class="chart-panel">
+            <div class="panel-title-row">
+              <div>
+                <h3>{{ 'publisher.reviews.monthlyChartTitle' | translate }}</h3>
+                <p>{{ 'publisher.reviews.monthlyChartSubtitleForContent' | translate: { title: selectedAnalyticsGroup()?.contentTitle ?? '-', year: selectedYear() } }}</p>
+              </div>
+            </div>
+
+            <div class="monthly-chart" [class.empty-chart]="totalReviews() === 0">
+              <div class="month-column" *ngFor="let month of monthlyReviewData()">
+                <div class="bar-track">
+                  <div class="bar-fill" [style.height]="monthBarHeight(month)">
+                    <span *ngIf="month.count > 0">{{ month.count }}</span>
+                  </div>
+                </div>
+                <strong>{{ month.label }}</strong>
+                <small>{{ month.averageRating ? month.averageRating.toFixed(1) : '-' }}</small>
+              </div>
+            </div>
+          </div>
+
+          <aside class="insights-panel">
+            <h3>{{ 'publisher.reviews.signals' | translate }}</h3>
+            <div class="insight-row">
+              <span>{{ 'publisher.reviews.busiestMonth' | translate }}</span>
+              <strong>{{ busiestMonth()?.label ?? '-' }}</strong>
+              <small>{{ 'publisher.reviews.reviewCount' | translate: { count: busiestMonth()?.count ?? 0 } }}</small>
+            </div>
+            <div class="insight-row">
+              <span>{{ 'publisher.reviews.bestReviewMonth' | translate }}</span>
+              <strong>{{ bestRatedMonth()?.label ?? '-' }}</strong>
+              <small>{{ 'publisher.reviews.averageValue' | translate: { value: bestRatedMonthAverageText() } }}</small>
+            </div>
+            <div class="insight-row attention">
+              <span>{{ 'publisher.reviews.lowestReviewMonth' | translate }}</span>
+              <strong>{{ worstRatedMonth()?.label ?? '-' }}</strong>
+              <small>{{ 'publisher.reviews.averageValue' | translate: { value: worstRatedMonthAverageText() } }}</small>
+            </div>
+            <div class="rating-distribution">
+              <div class="distribution-row" *ngFor="let item of ratingDistribution()">
+                <span>{{ 'publisher.reviews.stars' | translate: { count: item.rating } }}</span>
+                <div class="distribution-track">
+                  <div class="distribution-fill" [style.width.%]="item.percentage"></div>
+                </div>
+                <strong>{{ item.count }}</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="reviews-card">
+        <div class="filters-bar">
+          <div class="filter-group search-group">
+            <label>{{ 'common.search' | translate }}</label>
+            <input
+              type="text"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchChange($event)"
+              [placeholder]="'publisher.reviews.searchPlaceholder' | translate"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label>{{ 'publisher.reviews.sortContentBy' | translate: { type: contentTypeLabel(true) } }}</label>
+            <p-select
+              [options]="sortGroupsOptions()"
+              [ngModel]="sortGroupsBy()"
+              (ngModelChange)="onSortGroupsChange($event)"
+              [appendTo]="'body'"
+              styleClass="w-full">
+            </p-select>
+          </div>
+        </div>
+
+        <div *ngIf="filteredContentGroups().length === 0" class="empty-state embedded">
+          {{ 'publisher.reviews.noContentFound' | translate: { type: contentTypeLabel(true) } }}
+        </div>
+
+        <div class="content-grid" *ngIf="filteredContentGroups().length > 0">
+          <article
+            class="content-review-card"
+            *ngFor="let group of pagedContentGroups()"
+            [class.selected]="isAnalyticsGroupSelected(group)"
+            (click)="selectAnalyticsGroup(group)">
+            <div class="content-card-top">
+              <div>
+                <span class="type-pill">{{ contentTypeLabel(false) }}</span>
+                <h3>{{ group.contentTitle }}</h3>
+                <p>{{ group.destinationName || group.status || ('publisher.reviews.publisherContent' | translate) }}</p>
+              </div>
+              <span class="selected-pill" [class.is-placeholder]="!isAnalyticsGroupSelected(group)">
+                {{ 'publisher.reviews.selectedForAnalytics' | translate }}
+              </span>
+              <div class="rating-chip">
+                <span>&#9733;</span>
+                <strong>{{ group.averageRating ? group.averageRating.toFixed(1) : '-' }}</strong>
+              </div>
+            </div>
+
+            <div class="content-metrics">
+              <div>
+                <span>{{ 'publisher.reviews.metricReviews' | translate }}</span>
+                <strong>{{ group.reviewCount }}</strong>
+              </div>
+              <div>
+                <span>{{ 'publisher.reviews.metricAverage' | translate }}</span>
+                <strong>{{ group.averageRating ? group.averageRating.toFixed(1) : '0.0' }}</strong>
+              </div>
+            </div>
+
+            <button type="button" class="show-reviews-btn" (click)="openReviews(group)" [disabled]="group.reviewCount === 0">
+              {{ 'publisher.reviews.showReviews' | translate }}
+            </button>
+          </article>
+        </div>
+
+        <div class="pagination-row" *ngIf="contentTotalPages() > 1">
+          <button type="button" class="pagination-btn" (click)="goToContentPage(contentPage() - 1)" [disabled]="contentPage() === 1">
+            {{ 'common.previous' | translate }}
+          </button>
+          <span>{{ 'common.pageOf' | translate: { page: contentPage(), total: contentTotalPages() } }}</span>
+          <button type="button" class="pagination-btn" (click)="goToContentPage(contentPage() + 1)" [disabled]="contentPage() === contentTotalPages()">
+            {{ 'common.next' | translate }}
+          </button>
+        </div>
+      </section>
+    </ng-container>
+
+  </main>
+</div>
+
+<div class="review-modal-overlay" *ngIf="selectedReviewGroup()" (click)="closeReviews()">
+  <section class="review-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <span class="eyebrow">{{ 'publisher.reviews.title' | translate }}</span>
+        <h2>{{ selectedReviewGroup()!.contentTitle }}</h2>
+        <p>{{ 'publisher.reviews.modalSummary' | translate: { count: selectedReviewGroup()!.reviewCount, average: selectedReviewGroup()!.averageRating.toFixed(1) } }}</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeReviews()" [attr.aria-label]="'publisher.reviews.closeReviews' | translate">x</button>
+    </div>
+
+    <div class="modal-controls">
+      <div class="filter-group">
+        <label>{{ 'publisher.reviews.sortReviewsBy' | translate }}</label>
+        <select
+          class="native-modal-select"
+          [ngModel]="sortReviewsBy()"
+          (ngModelChange)="onSortReviewsChange($event)">
+          <option *ngFor="let option of sortReviewsOptions()" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="rating-filter">
+        <button type="button" [class.active]="ratingFilter() === 0" (click)="setRatingFilter(0)">{{ 'common.all' | translate }}</button>
+        <button type="button" *ngFor="let rating of [5,4,3,2,1]" [class.active]="ratingFilter() === rating" (click)="setRatingFilter(rating)">
+          {{ rating }} &#9733; <span>{{ ratingCount(rating) }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="review-list">
+      <div *ngIf="isReviewsLoading(); else loadedReviews" class="empty-panel">
+        {{ 'publisher.reviews.loading' | translate }}
+      </div>
+
+      <ng-template #loadedReviews>
+        <article class="review-item" *ngFor="let review of pagedModalReviews()">
+          <div class="review-header">
+            <div>
+              <strong>{{ review.touristName || ('reviews.defaultAuthor' | translate) }}</strong>
+              <span>{{ formatDate(review.date) }}</span>
+            </div>
+            <div class="review-stars">
+              <ng-container *ngFor="let i of [1,2,3,4,5]">
+                <span [class.filled]="i <= review.rating">&#9733;</span>
+              </ng-container>
+            </div>
+          </div>
+          <p *ngIf="review.comment; else noComment">{{ review.comment }}</p>
+          <ng-template #noComment>
+            <p class="muted-comment">{{ 'reviews.noWrittenComment' | translate }}</p>
+          </ng-template>
+        </article>
+
+        <div *ngIf="modalReviews().length === 0" class="empty-panel">
+          {{ 'publisher.reviews.noReviewsMatch' | translate }}
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="pagination-row modal-pagination" *ngIf="!isReviewsLoading() && reviewTotalPages() > 1">
+      <button type="button" class="pagination-btn" (click)="goToReviewPage(reviewPage() - 1)" [disabled]="reviewPage() === 1">
+        {{ 'common.previous' | translate }}
+      </button>
+      <span>{{ 'common.pageOf' | translate: { page: reviewPage(), total: reviewTotalPages() } }}</span>
+      <button type="button" class="pagination-btn" (click)="goToReviewPage(reviewPage() + 1)" [disabled]="reviewPage() === reviewTotalPages()">
+        {{ 'common.next' | translate }}
+      </button>
+    </div>
+  </section>
+</div>

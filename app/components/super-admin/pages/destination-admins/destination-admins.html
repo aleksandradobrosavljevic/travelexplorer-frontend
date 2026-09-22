@@ -1,0 +1,218 @@
+<section class="destination-admins-page">
+  <div class="page-header">
+    <div>
+      <h1>Destination Admins</h1>
+      <p>Create, assign and manage destination-specific admin profiles.</p>
+    </div>
+    <button class="primary-btn" (click)="openAddForm()">Add New Destination Admin</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-label">Total Admins</span>
+      <strong>{{ totalRecords() }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Active</span>
+      <strong>{{ activeCount() }}</strong>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Inactive</span>
+      <strong>{{ inactiveCount() }}</strong>
+    </div>
+  </div>
+
+  <div class="destination-admins-card">
+    <div class="card-header">
+      <div>
+        <h2>Destination Admin Management</h2>
+        <p class="card-subtitle">Manage admin profiles and destination assignments.</p>
+      </div>
+      <span class="admins-count">{{ totalRecords() }} results</span>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group search-group">
+        <label for="adminSearch">Search</label>
+        <input
+          id="adminSearch"
+          type="text"
+          placeholder="Search by full name or email"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>Destination</label>
+        <p-select
+          [options]="destinationOptions()"
+          [(ngModel)]="selectedDestination"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onDestinationChange()"
+          appendTo="body"
+          styleClass="da-filter-select">
+        </p-select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <p-select
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          (onChange)="onStatusChange()"
+          appendTo="body"
+          styleClass="da-filter-select">
+        </p-select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="secondary-btn" (click)="clearAllFilters()">Clear All Filters</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="destination-admins-table">
+        <thead>
+          <tr>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Assigned Destination</th>
+            <th>Status</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let admin of filteredDestinationAdmins()">
+            <td>{{ admin.fullName }}</td>
+            <td>{{ admin.email }}</td>
+            <td>{{ admin.assignedDestination }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(admin.status)">
+                {{ admin.status }}
+              </span>
+            </td>
+            <td class="actions-column">
+              <div class="action-buttons">
+                <button class="edit-btn" (click)="openEditForm(admin)">Edit</button>
+                <button
+                  class="toggle-btn"
+                  [ngClass]="admin.status === 'Active' ? 'deactivate-btn' : 'activate-btn'"
+                  (click)="openStatusConfirm(admin)">
+                  {{ admin.status === 'Active' ? 'Deactivate' : 'Activate' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredDestinationAdmins().length === 0">
+            <td colspan="5" class="empty-state">
+              No destination admins found for the selected filters.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p-paginator
+      [rows]="pageSize()"
+      [totalRecords]="totalRecords()"
+      [rowsPerPageOptions]="[5, 10, 20]"
+      (onPageChange)="onPageChange($event)"
+      appendTo="body"
+      styleClass="da-paginator">
+    </p-paginator>
+  </div>
+
+  <div class="form-overlay" *ngIf="isFormOpen()" (click)="closeForm()"></div>
+  <aside class="form-panel" [class.open]="isFormOpen()">
+    <div class="form-panel-header">
+      <div>
+        <h2>{{ formMode === 'add' ? 'Add Destination Admin' : 'Edit Destination Admin' }}</h2>
+        <p>{{ formMode === 'add' ? 'Create a new destination admin profile and assign a destination.' : 'Update destination admin information and assignment.' }}</p>
+      </div>
+      <button class="close-btn" (click)="closeForm()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="adminEmail">Email</label>
+        <div class="input-wrapper">
+          <input
+            id="adminEmail"
+            type="email"
+            [(ngModel)]="formData.email"
+            (blur)="onEmailBlur()"
+            [disabled]="formMode === 'edit'"
+            placeholder="Enter user email"
+          />
+          <span class="input-spinner" *ngIf="isLookingUpEmail()">⟳</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="adminFullName">Full Name</label>
+        <input
+          id="adminFullName"
+          type="text"
+          [(ngModel)]="formData.fullName"
+          [disabled]="formMode === 'add'"
+          placeholder="Auto-filled from email"
+        />
+      </div>
+      <div class="form-group">
+        <label>Assigned Destination</label>
+        <p-select
+          [options]="availableDestinationOptions()"
+          [(ngModel)]="formData.assignedDestination"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select destination"
+          [showClear]="false"
+          appendTo="body"
+          styleClass="da-filter-select">
+        </p-select>
+      </div>
+      <div class="form-group">
+        <label for="adminRole">Role</label>
+        <input id="adminRole" type="text" [value]="formData.role" disabled />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="closeForm()">Cancel</button>
+      <button class="save-btn" (click)="saveDestinationAdmin()" [disabled]="isEditUnchanged">
+        {{ formMode === 'add' ? 'Create Admin Profile' : 'Save Changes' }}
+      </button>
+    </div>
+  </aside>
+
+  <div class="modal-overlay" *ngIf="isStatusConfirmOpen()" (click)="closeStatusConfirm()"></div>
+  <div class="confirm-modal" *ngIf="isStatusConfirmOpen()">
+    <div class="modal-header">
+      <div>
+        <h2>{{ selectedAdminForStatus()?.status === 'Active' ? 'Deactivate Destination Admin' : 'Activate Destination Admin' }}</h2>
+        <p>Are you sure you want to {{ selectedAdminForStatus()?.status === 'Active' ? 'deactivate' : 'activate' }} this destination admin?</p>
+      </div>
+      <button class="modal-close-btn" (click)="closeStatusConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-target">{{ selectedAdminForStatus()?.fullName }}</p>
+      <p class="modal-hint" *ngIf="selectedAdminForStatus()?.status === 'Active'">
+        Their account will be disabled and they will no longer be able to log in.
+      </p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" (click)="closeStatusConfirm()">Cancel</button>
+      <button
+        [disabled]="isSubmitting()"
+        class="modal-confirm-btn"
+        [ngClass]="selectedAdminForStatus()?.status === 'Active' ? 'warning-confirm' : 'success-confirm'"
+        (click)="confirmStatusChange()">
+        {{ selectedAdminForStatus()?.status === 'Active' ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+
+</section>

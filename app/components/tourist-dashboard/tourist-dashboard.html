@@ -1,0 +1,212 @@
+<div class="dashboard">
+  <app-header mode="full"></app-header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-main">
+      <section class="hero-section">
+        <div class="hero-text">
+          <p class="welcome-text">{{ 'dashboard.kicker' | translate }}</p>
+          <h1>{{ 'dashboard.title' | translate }}</h1>
+          <p>{{ 'dashboard.subtitle' | translate }}</p>
+
+          <div class="search-bar">
+            <input
+              type="text"
+              [placeholder]="'dashboard.searchPlaceholder' | translate"
+              [(ngModel)]="currentSearchValue"
+              (input)="onSearchChanged(currentSearchValue)"
+            />
+          </div>
+
+          <div class="destination-filter-bar">
+            <label>
+              <span>{{ 'dashboard.country' | translate }}</span>
+              <p-select
+                [options]="countrySelectOptions"
+                [ngModel]="countryQuery"
+                (ngModelChange)="onCountrySelectChanged($event)"
+                optionLabel="label"
+                optionValue="value">
+                <ng-template #selectedItem let-option>
+                  {{ option.translate ? (option.label | translate) : option.label }}
+                </ng-template>
+                <ng-template #item let-option>
+                  {{ option.translate ? (option.label | translate) : option.label }}
+                </ng-template>
+              </p-select>
+            </label>
+
+            <label>
+              <span>{{ 'dashboard.destination' | translate }}</span>
+              <p-select
+                [options]="destinationSelectOptions"
+                [ngModel]="selectedDestinationId"
+                (ngModelChange)="onDestinationSelectChanged($event)"
+                optionLabel="label"
+                optionValue="value">
+                <ng-template #selectedItem let-option>
+                  {{ option.translate ? (option.label | translate) : option.label }}
+                </ng-template>
+                <ng-template #item let-option>
+                  {{ option.translate ? (option.label | translate) : option.label }}
+                </ng-template>
+              </p-select>
+            </label>
+
+            <label>
+              <span>{{ 'sort.label' | translate }}</span>
+              <p-select
+                [options]="sortOptions"
+                [ngModel]="currentSortOption"
+                (ngModelChange)="onSortChanged($event)"
+                optionLabel="labelKey"
+                optionValue="value">
+                <ng-template #selectedItem let-option>
+                  {{ option.labelKey | translate }}
+                </ng-template>
+                <ng-template #item let-option>
+                  {{ option.labelKey | translate }}
+                </ng-template>
+              </p-select>
+            </label>
+
+            <button type="button" class="clear-destination-btn" (click)="clearDestinationFilters()">
+              {{ 'common.clear' | translate }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="dashboard-sections">
+        <div *ngIf="hasNoResults" class="no-results">
+          <h2>{{ 'common.noResults' | translate }}</h2>
+          <p>{{ 'dashboard.noResultsHint' | translate }}</p>
+        </div>
+
+        <ng-container *ngIf="!hasNoResults">
+          <section class="content-section" *ngIf="filteredRecommendedForYou.length > 0">
+            <div class="content-section-title">
+              <h2>{{ 'dashboard.recommended' | translate }}</h2>
+            </div>
+
+            <div
+              class="card-grid"
+              (pointerdown)="startRowDrag($event)"
+              (pointermove)="moveRowDrag($event)"
+              (pointerup)="endRowDrag($event)"
+              (pointerleave)="endRowDrag($event)"
+              (pointercancel)="endRowDrag($event)">
+              <app-preview-card
+                *ngFor="let item of filteredRecommendedForYou | slice:0:6; trackBy: trackByCard"
+                [id]="item.id"
+                [entityType]="item.entityType"
+                [image]="item.image"
+                [title]="item.title"
+                [location]="item.location"
+                [rating]="item.rating"
+                [price]="displayCardPrice(item)"
+                [isFavorite]="item.isFavorite"
+                (favoriteToggled)="onFavoriteToggled($event)"
+                (cardSelected)="onCardSelected($event)">
+              </app-preview-card>
+            </div>
+          </section>
+
+          <section class="content-section" *ngIf="filteredFeaturedDestinations.length > 0">
+            <app-section-header
+              [title]="'dashboard.objects' | translate"
+              [linkText]="'common.seeAll' | translate"
+              routePath="/section/objects"
+              [queryParams]="getSectionQueryParams('objects')">
+            </app-section-header>
+
+            <div
+              class="card-grid"
+              (pointerdown)="startRowDrag($event)"
+              (pointermove)="moveRowDrag($event)"
+              (pointerup)="endRowDrag($event)"
+              (pointerleave)="endRowDrag($event)"
+              (pointercancel)="endRowDrag($event)">
+              <app-preview-card
+                *ngFor="let item of filteredFeaturedDestinations | slice:0:6; trackBy: trackByCard"
+                [id]="item.id"
+                [entityType]="item.entityType"
+                [image]="item.image"
+                [title]="item.title"
+                [location]="item.location"
+                [rating]="item.rating"
+                [price]="displayCardPrice(item)"
+                [isFavorite]="item.isFavorite"
+                (favoriteToggled)="onFavoriteToggled($event)"
+                (cardSelected)="onCardSelected($event)">
+              </app-preview-card>
+            </div>
+          </section>
+
+          <section class="content-section" *ngIf="filteredNearbyPlaces.length > 0">
+            <app-section-header
+              [title]="'dashboard.activities' | translate"
+              [linkText]="'common.seeAll' | translate"
+              routePath="/section/activities"
+              [queryParams]="getSectionQueryParams('activities')">
+            </app-section-header>
+
+            <div
+              class="card-grid"
+              (pointerdown)="startRowDrag($event)"
+              (pointermove)="moveRowDrag($event)"
+              (pointerup)="endRowDrag($event)"
+              (pointerleave)="endRowDrag($event)"
+              (pointercancel)="endRowDrag($event)">
+              <app-preview-card
+                *ngFor="let item of filteredNearbyPlaces | slice:0:6; trackBy: trackByCard"
+                [id]="item.id"
+                [entityType]="item.entityType"
+                [image]="item.image"
+                [title]="item.title"
+                [location]="item.location"
+                [rating]="item.rating"
+                [price]="displayCardPrice(item)"
+                [isFavorite]="item.isFavorite"
+                (favoriteToggled)="onFavoriteToggled($event)"
+                (cardSelected)="onCardSelected($event)">
+              </app-preview-card>
+            </div>
+          </section>
+
+          <section class="content-section" *ngIf="filteredDestinationEvents.length > 0">
+            <app-section-header
+              [title]="'dashboard.events' | translate"
+              [linkText]="'common.seeAll' | translate"
+              routePath="/section/events"
+              [queryParams]="getSectionQueryParams('events')">
+            </app-section-header>
+
+            <div
+              class="card-grid"
+              (pointerdown)="startRowDrag($event)"
+              (pointermove)="moveRowDrag($event)"
+              (pointerup)="endRowDrag($event)"
+              (pointerleave)="endRowDrag($event)"
+              (pointercancel)="endRowDrag($event)">
+              <app-preview-card
+                *ngFor="let item of filteredDestinationEvents | slice:0:6; trackBy: trackByCard"
+                [id]="item.id"
+                [entityType]="item.entityType"
+                [image]="item.image"
+                [title]="item.title"
+                [location]="item.location"
+                [rating]="item.rating"
+                [price]="displayCardPrice(item)"
+                [isFavorite]="item.isFavorite"
+                (favoriteToggled)="onFavoriteToggled($event)"
+                (cardSelected)="onCardSelected($event)">
+              </app-preview-card>
+            </div>
+          </section>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+  <app-chatbot></app-chatbot>
+</div>

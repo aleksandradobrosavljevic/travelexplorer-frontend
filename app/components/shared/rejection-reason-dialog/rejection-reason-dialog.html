@@ -1,0 +1,31 @@
+<div class="reason-backdrop" *ngIf="isOpen" (click)="cancel()"></div>
+
+<section class="reason-dialog" *ngIf="isOpen" role="dialog" aria-modal="true" [attr.aria-label]="title">
+  <button type="button" class="dialog-close" (click)="cancel()" aria-label="Close rejection reason dialog">x</button>
+
+  <div class="dialog-icon danger">!</div>
+
+  <h2>{{ title }}</h2>
+  <p>{{ message }}</p>
+
+  <label class="reason-field">
+    <span>Reason</span>
+    <textarea
+      [(ngModel)]="reason"
+      rows="5"
+      placeholder="Explain why this should be rejected..."
+      autofocus
+    ></textarea>
+  </label>
+
+  <div class="validation-message" *ngIf="showValidation">
+    Rejection reason is required.
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" class="cancel-btn" (click)="cancel()">{{ cancelLabel }}</button>
+    <button type="button" class="confirm-btn danger" (click)="confirm()">
+      {{ confirmLabel }}
+    </button>
+  </div>
+</section>

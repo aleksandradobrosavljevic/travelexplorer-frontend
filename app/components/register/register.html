@@ -1,0 +1,261 @@
+<div class="register-page">
+  <div class="register-wrapper">
+    <app-header mode="minimal"></app-header>
+
+    <div class="register-card">
+      <h2>{{ 'navigation.register' | translate }}</h2>
+      <p>
+        {{ 'auth.registerIntro' | translate }}
+      </p>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+        <div class="form-group">
+          <label>{{ 'auth.accountType' | translate }}</label>
+
+          <div class="role-switch">
+            <div class="slider" [class.publisher]="isPublisher"></div>
+
+            <button
+              type="button"
+              (click)="selectRole('tourist')"
+              [class.active]="!isPublisher">
+              {{ 'auth.tourist' | translate }}
+            </button>
+
+            <button
+              type="button"
+              (click)="selectRole('publisher')"
+              [class.active]="isPublisher">
+              {{ 'auth.publisher' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <div class="avatar-upload-row">
+          <div class="avatar-preview">
+            <img *ngIf="avatarPreview(); else avatarInitial" [src]="avatarPreview()!" alt="Profile preview" />
+            <ng-template #avatarInitial>
+              <span>{{ isPublisher ? 'P' : 'T' }}</span>
+            </ng-template>
+          </div>
+
+          <div class="avatar-upload-actions">
+            <label for="registrationAvatar">Profile photo <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+            <div class="avatar-buttons">
+              <label class="avatar-upload-btn" for="registrationAvatar">Choose photo</label>
+              <button *ngIf="avatarPreview()" type="button" class="avatar-clear-btn" (click)="clearAvatar()">Remove</button>
+            </div>
+            <input id="registrationAvatar" type="file" accept="image/*" (change)="onAvatarSelected($event)" hidden />
+          </div>
+        </div>
+
+        <ng-container *ngIf="!isPublisher; else publisherFields">
+          <div class="form-row two-columns">
+            <div class="form-group">
+              <label for="firstName">{{ 'auth.firstName' | translate }}</label>
+              <input
+                pInputText
+                id="firstName"
+                type="text"
+                formControlName="firstName"
+                [placeholder]="'auth.firstNamePlaceholder' | translate" />
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">{{ 'auth.lastName' | translate }}</label>
+              <input
+                pInputText
+                id="lastName"
+                type="text"
+                formControlName="lastName"
+                [placeholder]="'auth.lastNamePlaceholder' | translate" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="dateOfBirth">{{ 'profile.dateOfBirth' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+            <p-datepicker
+              inputId="dateOfBirth"
+              formControlName="dateOfBirth"
+              [placeholder]="'auth.dateOfBirthPlaceholder' | translate"
+              dateFormat="dd.mm.yy"
+              [showIcon]="true"
+              [maxDate]="maxDateOfBirth"
+              [defaultDate]="defaultDateOfBirth"
+              styleClass="register-datepicker"
+              panelStyleClass="register-datepicker-panel">
+            </p-datepicker>
+          </div>
+        </ng-container>
+
+        <ng-template #publisherFields>
+          <div class="publisher-section-title" id="Publisher-application-details">{{ 'auth.publisherApplicationDetails' | translate }}</div>
+
+          <div class="form-group">
+            <label for="organizationName">{{ 'auth.organizationName' | translate }}</label>
+            <input
+              pInputText
+              id="organizationName"
+              type="text"
+              formControlName="organizationName"
+              [placeholder]="'auth.organizationNamePlaceholder' | translate" />
+          </div>
+
+          <div class="form-row two-columns">
+            <div class="form-group">
+              <label for="contactPerson">{{ 'auth.contactPerson' | translate }}</label>
+              <input
+                pInputText
+                id="contactPerson"
+                type="text"
+                formControlName="contactPerson"
+                [placeholder]="'auth.contactPersonPlaceholder' | translate" />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">{{ 'profile.phone' | translate }}</label>
+              <input
+                pInputText
+                id="phone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                formControlName="phone"
+                [placeholder]="phonePlaceholder"
+                (input)="onPhoneInput($any($event.target).value)" />
+              <small class="field-hint">{{ phoneHelperText }}</small>
+            </div>
+          </div>
+
+          <div class="form-row two-columns">
+            <div class="form-group">
+              <label for="publisherTypeId">{{ 'auth.publisherType' | translate }}</label>
+              <p-select
+                inputId="publisherTypeId"
+                [options]="publisherTypeOptions()"
+                formControlName="publisherTypeId"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'auth.selectWhatYouPublish' | translate"
+                styleClass="register-select">
+              </p-select>
+            </div>
+
+            <div class="form-group">
+              <label for="destinationId">{{ 'dashboard.destination' | translate }}</label>
+              <p-select
+                inputId="destinationId"
+                [options]="destinationOptions()"
+                formControlName="destinationId"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'dashboard.destinationPlaceholder' | translate"
+                styleClass="register-select">
+              </p-select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="website">{{ 'auth.website' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+            <input
+              pInputText
+              id="website"
+              type="text"
+              formControlName="website"
+              [placeholder]="'auth.websitePlaceholder' | translate" />
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;">
+              <label for="description">{{ 'auth.description' | translate }} <span class="optional-tag">{{ 'common.optional' | translate }}</span></label>
+              <span style="font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;"
+                [style.color]="descriptionLength > DESCRIPTION_MAX_LENGTH ? '#dc2626' : '#9ca3af'">
+                {{ descriptionLength }} / {{ DESCRIPTION_MAX_LENGTH }}
+              </span>
+            </div>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="4"
+              maxlength="500"
+              [placeholder]="'auth.descriptionPlaceholder' | translate"></textarea>
+          </div>
+        </ng-template>
+
+        <div class="form-group">
+          <label for="email">{{ 'auth.emailAddress' | translate }}</label>
+          <input
+            pInputText
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="name@example.com" />
+        </div>
+
+        <div class="form-row two-columns">
+          <div class="form-group">
+            <label for="password">{{ 'auth.password' | translate }}</label>
+
+            <div class="password-wrapper">
+              <input
+                pInputText
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                [placeholder]="'auth.createPassword' | translate" />
+
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="togglePasswordVisibility()">
+                <span class="material-icons">
+                  {{ showPassword() ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
+
+            <small class="password-hint">{{ 'auth.passwordHint' | translate }}</small>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">{{ 'auth.confirmPassword' | translate }}</label>
+
+            <div class="password-wrapper">
+              <input
+                pInputText
+                id="confirmPassword"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                [placeholder]="'auth.confirmPasswordPlaceholder' | translate" />
+
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="togglePasswordVisibility()">
+                <span class="material-icons">
+                  {{ showPassword() ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button pButton type="submit" class="submit-btn" [disabled]="isLoading()">
+          {{ isLoading() ? ('common.pleaseWait' | translate) : (isPublisher ? ('auth.submitPublisherRequest' | translate) : ('auth.createAccount' | translate)) }}
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>{{ 'common.or' | translate }}</span>
+      </div>
+
+      <button pButton type="button" class="login-btn" (click)="goToLogin()">
+        {{ 'auth.backToLogin' | translate }}
+      </button>
+
+      <button pButton type="button" class="guest-btn" (click)="continueAsGuest()">
+        {{ 'auth.continueAsGuest' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
